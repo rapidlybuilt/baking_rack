@@ -22,7 +22,9 @@ When paired with a good hosting service, static webpages are cheaper to host, ea
 
 ### Why one more Ruby static webpage generator?
 
-Ruby already offers many static website generators (Jekyll, Middleman, Nanoc, Bridgetown, etc), but they are all frameworks that dictate how your site is organized. `BakingRack` isn't interested in how your site is organized, just that it's [a Rack app](https://github.com/rack/rack/). `BakingRack` is a narrowly-focused library, not an all-encompassing framework.
+`BakingRack` is a narrowly-focused library, not an all-encompassing framework.
+
+Jekyll, Middleman, Nanoc, Bridgetown, etc are all frameworks that dictate how your site is organized. `BakingRack` isn't interested in how your site is organized, just that it's [a Rack app](https://github.com/rack/rack/).
 
 ## Getting Started
 
@@ -36,7 +38,14 @@ Then run `bundle install`.
 
 ### If hosting on AWS S3
 
-To generate terraform files for setting up the AWS resources necessary for hosting the files on S3 while serving the webpages on CloudFront. `redirects` (optional) are domain name(s) that will redirect to your actual website.
+Add another gem to your Gemfile:
+
+```ruby
+gem "aws-sdk-s3", require: false
+```
+
+Then run the following commands if you want to terraform files for creating the AWS resources necessary for hosting on S3 and serving on CloudFront.
+
 
 ```bash
 # Rails only
@@ -45,6 +54,10 @@ $ bin/rails g baking_rack:terraform:aws_s3 --bucket "my-bucket.com" --redirects 
 # Non-Rails can use Rake via `require "baking_rack/rake"`
 $ bundle exec rake baking_rack:terraform:aws_s3 BUCKET="my-bucket.com" REDIRECTS="www.my-bucket.com,old-bucket.com"
 ```
+
+`redirects` (optional) are domain name(s) that will redirect to your actual website.
+
+Refer to the [Terraform AWS Usage docs](https://developer.hashicorp.com/terraform/tutorials/aws-get-started) from there (hint: `terraform init` `terraform apply`)
 
 ## Usage
 
