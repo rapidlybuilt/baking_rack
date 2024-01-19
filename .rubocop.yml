@@ -1,0 +1,35 @@
+require:
+- rubocop-rake
+- rubocop-rspec
+AllCops:
+  NewCops: enable
+  Exclude:
+  - spec/**/*
+  - tmp/**/*
+  TargetRubyVersion: "3.1"
+Layout/AccessModifierIndentation:
+  EnforcedStyle: outdent
+Layout/MultilineMethodCallBraceLayout:
+  EnforcedStyle: new_line
+Metrics/AbcSize:
+  Max: 25
+  CountRepeatedAttributes: false
+Metrics/MethodLength:
+  Max: 20
+Naming/FileName:
+  Exclude:
+  - lib/rapid-props.rb
+Style/AccessorGrouping:
+  EnforcedStyle: separated
+Style/Alias:
+  EnforcedStyle: prefer_alias_method
+# Style/Documentation:
+#   Enabled: false
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+Style/StringLiteralsInInterpolation:
+  EnforcedStyle: double_quotes
+Style/TrailingCommaInArguments:
+  EnforcedStyleForMultiline: consistent_comma
+Style/TrailingCommaInHashLiteral:
+  EnforcedStyleForMultiline: consistent_comma
