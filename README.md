@@ -24,7 +24,7 @@ When paired with a good hosting service, static webpages are cheaper to host, ea
 
 `BakingRack` is a narrowly-focused library, not an all-encompassing framework.
 
-Jekyll, Middleman, Nanoc, Bridgetown, etc are all frameworks that dictate how your site is organized. `BakingRack` isn't interested in how your site is organized, just that it's [a Rack app](https://github.com/rack/rack/).
+Jekyll, Middleman, Nanoc, and Bridgetown are frameworks that define how your site is organized. `BakingRack` isn't interested in that, just that your site is [a Rack app](https://github.com/rack/rack/) (protip: all those frameworks support Rack) in order to gather its static pages and publish them to a static webserver or CDN.
 
 ## Getting Started
 
@@ -57,7 +57,7 @@ $ bundle exec rake baking_rack:terraform:aws_s3 BUCKET="my-bucket.com" REDIRECTS
 
 `redirects` (optional) are domain name(s) that will redirect to your actual website.
 
-Refer to the [Terraform AWS Usage docs](https://developer.hashicorp.com/terraform/tutorials/aws-get-started) from there (hint: `terraform init` `terraform apply`)
+Then refer to the [Terraform AWS Usage docs](https://developer.hashicorp.com/terraform/tutorials/aws-get-started) (hint: `terraform init` `terraform apply`)
 
 ## Usage
 
