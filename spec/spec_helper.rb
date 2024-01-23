@@ -6,7 +6,7 @@ SimpleCov.start do
 end
 
 require "baking_rack"
-# require "debug"
+require "debug"
 
 # ensure simplecov isn't missing anything
 Zeitwerk::Loader.eager_load_all

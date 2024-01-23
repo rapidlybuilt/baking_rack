@@ -23,8 +23,8 @@ Style/AccessorGrouping:
   EnforcedStyle: separated
 Style/Alias:
   EnforcedStyle: prefer_alias_method
-# Style/Documentation:
-#   Enabled: false
+Style/Documentation:
+  Enabled: false
 Style/StringLiterals:
   EnforcedStyle: double_quotes
 Style/StringLiteralsInInterpolation:

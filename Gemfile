@@ -4,6 +4,8 @@ source "https://rubygems.org"
 
 gemspec
 
+gem "aws-sdk-s3", require: false
+
 gem "debug"
 gem "guard-rspec", ">= 4.7.3"
 gem "rake"

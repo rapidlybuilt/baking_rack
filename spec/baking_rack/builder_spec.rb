@@ -1,0 +1,125 @@
+# frozen_string_literal: true
+
+require "spec_helper"
+
+RSpec.describe BakingRack::Builder do
+  let(:output_directory) { "tmp/test" }
+  let(:domain_name) { "example.com" }
+  let(:html_content) { "<p>Hi!</p>" }
+
+  let(:basic_app) do
+    # Rack app that returns HTML contenet for all URLs
+    Proc.new do |env|
+      ["200", {"Content-Type" => "text/html"}, [html_content]]
+    end
+  end
+
+  after do
+    FileUtils.rm_rf(output_directory)
+  end
+
+  describe "build" do
+    it "retrieves a route from the app and writes it to the file" do
+      described_class.run(app: basic_app, output_directory:, domain_name:) do |b|
+        b.define_static_routes do
+          get "/foo.html"
+        end
+      end
+
+      expect(read_build_file("foo.html")).to eql(html_content)
+    end
+
+    it "writes redirects with custom file content" do
+      app = Proc.new do |env|
+        ["301", {"Location" => "/bar.html"}, []]
+      end
+
+      builder = described_class.new(app:, output_directory:, domain_name:) do |b|
+        b.define_static_routes do
+          get "/foo.html", status: 301
+        end
+      end
+
+      builder.run
+
+      expect(read_build_file("foo.html")).to eql(BakingRack.redirect_file_content("/bar.html"))
+    end
+
+    it "raises an error when the returned status differs from the expected one" do
+      builder = described_class.new(app: basic_app, output_directory:, domain_name:) do |b|
+        b.define_static_routes do
+          get "/foo.html", status: 301
+        end
+      end
+
+      expect{builder.run}.to raise_error(BakingRack::UnexpectedStatusCode)
+    end
+
+    it "appends index.html to naked directories when writing to the file" do
+      builder = described_class.new(app: basic_app, output_directory:, domain_name:) do |b|
+        b.define_static_routes do
+          get "/"
+        end
+      end
+
+      builder.run
+
+      expect(read_build_file("index.html")).to eql(html_content)
+    end
+
+    it "lazily runs #define_static_routes" do
+      expect do
+        described_class.new(app: basic_app, output_directory:, domain_name:) do |b|
+          b.define_static_routes do
+            raise "asdf"
+          end
+        end
+      end.not_to raise_error
+    end
+
+    it "copies all files in the directory into base of the output directory" do
+      source_directory = "tmp/src"
+
+      FileUtils.mkdir_p(File.join(source_directory, "assets"))
+      File.write(File.join(source_directory, "favicon.ico"), "BINARY")
+      File.write(File.join(source_directory, "assets/application.js"), "alert('hi');")
+
+      app = Proc.new do |env|
+        ["200", {"Content-Type" => "text/html"}, [html_content]]
+      end
+
+      builder = described_class.new(app:, output_directory:, domain_name:)
+      builder.public_directory = source_directory
+
+      builder.run
+
+      expect(read_build_file("favicon.ico")).to eql("BINARY")
+      expect(read_build_file("assets/application.js")).to eql("alert('hi');")
+    ensure
+      FileUtils.rm_rf(source_directory) rescue nil
+    end
+
+    it "protects against writing files outside the output directory" do
+      builder = described_class.new(app: basic_app, output_directory:, domain_name:)
+
+      expect{builder.send(:write_file, "../Rakefile", "foo") }.to raise_error(ArgumentError)
+    end
+  end
+
+  describe "clean" do
+    it "removes the output directory" do
+      FileUtils.mkdir_p(output_directory)
+
+      builder = described_class.new(app: basic_app, output_directory:, domain_name:)
+      builder.clean
+
+      expect(File.directory?(output_directory)).to eql(false)
+    end
+  end
+
+  private
+
+  def read_build_file(filename)
+    File.read(File.join(output_directory, filename))
+  end
+end
