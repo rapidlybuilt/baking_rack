@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "mime-types"
 
 module BakingRack
@@ -31,7 +33,7 @@ module BakingRack
 
     def content_type_for(path)
       extension = File.extname(path)
-      extension = extension[1..-1] if extension.start_with?(".")
+      extension = extension[1..] if extension.start_with?(".")
 
       MIME::Types.type_for(extension).first&.content_type
     end
@@ -45,7 +47,7 @@ module BakingRack
       end
 
       files.collect do |file|
-        file[source_directory.length+1..-1]
+        file[source_directory.length + 1..]
       end
     end
 
@@ -55,7 +57,7 @@ module BakingRack
       ignored_filenames.include?(filename)
     end
 
-    def unchanged?(file)
+    def unchanged?(_file)
       false # subclasses can implement this
     end
 
@@ -83,7 +85,7 @@ module BakingRack
       def redirect_location
         pattern = BakingRack.redirect_file_content("(.+)")
         regex = Regexp.new(pattern)
-        $1 if content =~ regex
+        ::Regexp.last_match(1) if content =~ regex
       rescue ArgumentError
         nil
       end

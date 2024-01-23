@@ -9,8 +9,7 @@ module BakingRack
   # require 'baking_rack/rake_task'
   # RakingRack::RakeTask.new
   class RakeTask < ::Rake::TaskLib
-
-    def initialize(namespace = :baking_rack, *args, &task_block)
+    def initialize(namespace = :baking_rack, *_args)
       super()
       @namespace = namespace
 

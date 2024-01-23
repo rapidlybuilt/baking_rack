@@ -1,6 +1,9 @@
+# frozen_string_literal: true
+
 require "rack"
 
 module BakingRack
+  # rubocop:disable Metrics/ClassLength
   class Builder
     attr_accessor :app
     attr_accessor :output_directory
@@ -32,6 +35,7 @@ module BakingRack
       raise ArgumentError, "use #define_static_routes for a block" if block_given?
 
       return @static_routes if @static_routes_built
+
       @static_routes_built = true
 
       context = static_routes_context
@@ -111,52 +115,21 @@ module BakingRack
       uri = self.uri.merge(static_route.path)
       status = static_route.status
 
-      request = {
-        # https://github.com/rack/rack/blob/d3225f7c201320ed272a2fa7b000c5850e4a5f88/lib/rack/mock.rb#L43-L50
-        Rack::RACK_VERSION      => Rack::VERSION,
-        Rack::RACK_INPUT        => StringIO.new,
-        Rack::RACK_ERRORS       => StringIO.new,
-        # Rack::RACK_MULTITHREAD  => true,
-        # Rack::RACK_MULTIPROCESS => true,
-        # Rack::RACK_RUNONCE      => false,
-
-        # https://github.com/rack/rack/blob/d3225f7c201320ed272a2fa7b000c5850e4a5f88/lib/rack.rb#L17-L27
-        Rack::HTTP_HOST       => uri.host,
-        Rack::HTTP_PORT       => uri.port,
-        Rack::HTTPS           => "on",
-        Rack::PATH_INFO       => uri.path,
-        Rack::REQUEST_METHOD  => "GET",
-        Rack::SCRIPT_NAME     => "",
-        Rack::QUERY_STRING    => uri.query,  # NOTE: multiple query strings values won't work
-        Rack::SERVER_PROTOCOL => "HTTP/1.1",
-        Rack::SERVER_NAME     => uri.host,
-        Rack::SERVER_PORT     => uri.port,
-      }
-
+      request = self.class.generate_request(uri)
       response = app.call(request)
 
       unless response[0].to_i == status.to_i
-        raise UnexpectedStatusCode, "got #{response[0]}, expected #{status} for #{uri.to_s}"
+        raise UnexpectedStatusCode, "got #{response[0]}, expected #{status} for #{uri}"
       end
 
-      # Standardize response header names to lowercase
-      headers = response[1].to_h.each_with_object({}) { |(k,v), h| h[k.downcase] = v }
-
-      # Gather the Rack body array into a single string
-      strings = []
-      response[2].each { |r| strings << r.to_s }
-      body = strings.reduce { |a, b| a << b }
-
-      return response[0], headers, body
+      self.class.deconstruct_response(response)
     end
 
     def write_file(path, content)
       filename = File.expand_path(File.join(output_directory, path))
 
       # prevent URLs from navigating outside the output directory with ../.. cleverness.
-      unless filename.start_with?(output_directory)
-        raise ArgumentError, "invalid URL: #{path}"
-      end
+      raise ArgumentError, "invalid URL: #{path}" unless filename.start_with?(output_directory)
 
       FileUtils.mkdir_p(File.dirname(filename))
       File.write(filename, content)
@@ -198,9 +171,46 @@ module BakingRack
     end
 
     class << self
-      def run(**kargs, &block)
-        new(**kargs, &block).run
+      def run(...)
+        new(...).run
+      end
+
+      def generate_request(uri)
+        {
+          # https://github.com/rack/rack/blob/d3225f7c201320ed272a2fa7b000c5850e4a5f88/lib/rack/mock.rb#L43-L50
+          Rack::RACK_VERSION => Rack::VERSION,
+          Rack::RACK_INPUT => StringIO.new,
+          Rack::RACK_ERRORS => StringIO.new,
+          # Rack::RACK_MULTITHREAD  => true,
+          # Rack::RACK_MULTIPROCESS => true,
+          # Rack::RACK_RUNONCE      => false,
+
+          # https://github.com/rack/rack/blob/d3225f7c201320ed272a2fa7b000c5850e4a5f88/lib/rack.rb#L17-L27
+          Rack::HTTP_HOST => uri.host,
+          Rack::HTTP_PORT => uri.port,
+          Rack::HTTPS => "on",
+          Rack::PATH_INFO => uri.path,
+          Rack::REQUEST_METHOD => "GET",
+          Rack::SCRIPT_NAME => "",
+          Rack::QUERY_STRING => uri.query, # NOTE: multiple query strings values won't work
+          Rack::SERVER_PROTOCOL => "HTTP/1.1",
+          Rack::SERVER_NAME => uri.host,
+          Rack::SERVER_PORT => uri.port,
+        }
+      end
+
+      def deconstruct_response(response)
+        # Standardize response header names to lowercase
+        headers = response[1].to_h.transform_keys(&:downcase)
+
+        # Gather the Rack body array into a single string
+        strings = []
+        response[2].each { |r| strings << r.to_s }
+        body = strings.reduce { |a, b| a << b }
+
+        [response[0], headers, body]
       end
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end

@@ -12,9 +12,9 @@ loader.ignore(File.join(lib_directory, "baking_rack/version.rb"))
 loader.setup # ready!
 
 module BakingRack
-  class Error < StandardError ; end
-  class UnexpectedStatusCode < Error ; end
-  class InvalidRakeSetup < Error ; end
+  class Error < StandardError; end
+  class UnexpectedStatusCode < Error; end
+  class InvalidRakeSetup < Error; end
 
   class << self
     def redirect_file_content(location)

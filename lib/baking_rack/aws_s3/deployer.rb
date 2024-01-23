@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "aws-sdk-s3"
 require "digest"
 
@@ -19,12 +21,10 @@ module BakingRack
           acl: "public-read",
           body: file.content,
           content_type: content_type_for(key) || "binary/octet-stream",
-          cache_control: fingerprinted?(key) ? "public,max-age=31556926" : "public,max-age=10"
+          cache_control: fingerprinted?(key) ? "public,max-age=31556926" : "public,max-age=10",
         }
 
-        if file.redirect?
-          headers_out[:website_redirect_location] = file.redirect_location
-        end
+        headers_out[:website_redirect_location] = file.redirect_location if file.redirect?
 
         s3_upload_file(key, headers_out)
       end

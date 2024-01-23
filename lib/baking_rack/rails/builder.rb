@@ -1,7 +1,10 @@
+# frozen_string_literal: true
+
 module BakingRack
   module Rails
     class Builder < BakingRack::Builder
-      def initialize(app: ::Rails.application, output_directory: "tmp/baking_rack", domain_name: default_domain_name(app), &block)
+      def initialize(app: ::Rails.application, output_directory: "tmp/baking_rack",
+                     domain_name: default_domain_name(app), &block)
         super(app:, output_directory:, domain_name:, &block)
 
         self.public_directory = "public"
@@ -31,7 +34,7 @@ module BakingRack
       end
 
       def bundle_exec(command)
-        system({"RAILS_ENV" => "production"}, "bundle exec #{command}")
+        system({ "RAILS_ENV" => "production" }, "bundle exec #{command}")
       end
     end
   end
