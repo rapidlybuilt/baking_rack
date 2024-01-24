@@ -27,7 +27,7 @@ module BakingRack
 
   private
 
-    def upload_file(path)
+    def upload_file(file)
       raise NotImplementedError, "#{self.class.name} must implement #upload_file"
     end
 
@@ -62,7 +62,7 @@ module BakingRack
     end
 
     def fingerprinted?(path)
-      File.basename(path) =~ /[0-9a-f]{64}/
+      !(File.basename(path) =~ /[0-9a-f]{16}/).nil?
     end
 
     class DeployFile
@@ -79,7 +79,7 @@ module BakingRack
       end
 
       def redirect?
-        redirect_location.present?
+        !!redirect_location
       end
 
       def redirect_location
@@ -88,6 +88,10 @@ module BakingRack
         ::Regexp.last_match(1) if content =~ regex
       rescue ArgumentError
         nil
+      end
+
+      def ==(obj)
+        obj.class == self.class && obj.directory == directory && obj.path == path
       end
     end
 

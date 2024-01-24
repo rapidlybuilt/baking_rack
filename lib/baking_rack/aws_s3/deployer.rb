@@ -21,7 +21,7 @@ module BakingRack
           acl: "public-read",
           body: file.content,
           content_type: content_type_for(key) || "binary/octet-stream",
-          cache_control: fingerprinted?(key) ? "public,max-age=31556926" : "public,max-age=10",
+          cache_control: cache_control_for(key),
         }
 
         headers_out[:website_redirect_location] = file.redirect_location if file.redirect?
@@ -38,6 +38,10 @@ module BakingRack
         s3_etag(file.path) == md5.inspect
       end
 
+      def cache_control_for(key)
+        fingerprinted?(key) ? "public,max-age=31556926" : "public,max-age=10"
+      end
+
       def s3
         # (preferred method) AWS credentials are read from ENV
         @s3 ||= Aws::S3::Resource.new
@@ -52,11 +56,13 @@ module BakingRack
       end
 
       def s3_objects
-        @s3_objects ||= s3_bucket.objects.to_a.index_by(&:key)
+        @s3_objects ||= s3_bucket.objects.to_a.each_with_object({}) do |obj, hash|
+          hash[obj.key] = obj
+        end
       end
 
       def s3_upload_file(key, properties)
-        puts "Uploading: #{key}"
+        # puts "Uploading: #{key}"
         s3_bucket.object(key).put(properties)
       end
     end
