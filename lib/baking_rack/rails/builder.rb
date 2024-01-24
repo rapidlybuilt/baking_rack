@@ -3,8 +3,9 @@
 module BakingRack
   module Rails
     class Builder < BakingRack::Builder
-      def initialize(app: ::Rails.application, output_directory: "tmp/baking_rack",
-                     domain_name: default_domain_name(app), &block)
+      def initialize(app: ::Rails.application,
+                     output_directory: "tmp/baking_rack",
+                     domain_name: nil, &block)
         super(app:, output_directory:, domain_name:, &block)
 
         self.public_directory = "public"
@@ -20,6 +21,10 @@ module BakingRack
         super
       end
 
+      def domain_name
+        super || default_domain_name
+      end
+
     private
 
       # TODO: helper to add ALL Rails routes as 200 or 301
@@ -29,7 +34,7 @@ module BakingRack
         context
       end
 
-      def default_domain_name(app)
+      def default_domain_name
         app.config.hosts.first
       end
 

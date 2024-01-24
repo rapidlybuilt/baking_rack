@@ -9,7 +9,7 @@ module BakingRack
   # require 'baking_rack/rake_task'
   # RakingRack::RakeTask.new
   class RakeTask < ::Rake::TaskLib
-    def initialize(namespace = :baking_rack, *_args)
+    def initialize(builder:, deployer:, namespace: :baking_rack, **_kargs)
       super()
       @namespace = namespace
 
@@ -40,18 +40,6 @@ module BakingRack
 
     def app_requirement_tasks
       defined?(::Rails) ? [:environment] : []
-    end
-
-    def builder
-      BakingRack::BUILDER
-    rescue NameError
-      raise InvalidRakeSetup, "You must defined BakingRack::BUILDER before running this task"
-    end
-
-    def deployer
-      BakingRack::DEPLOYER
-    rescue NameError
-      raise InvalidRakeSetup, "You must defined BakingRack::DEPLOYER before running this task"
     end
   end
 end

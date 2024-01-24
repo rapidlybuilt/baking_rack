@@ -73,23 +73,19 @@ BakingRack::AwsS3::Deployer.run(
 Rake CLI:
 
 ```ruby
-directory = "site"
-
-# config/initializers/baking_rack.rb
-BakingRack::BUILDER = BakingRack::Builder.new(output_directory: directory) do |b|
-  # same usage as BakingRack::Build.run above
-end
-
-BakingRack::DEPLOYER = BakingRack::Deployers::AwsS3.new(
-  directory: directory,
-  bucket_name: "my-bucket.com",
-)
-```
-
-```ruby
 # Rakefile
 require "baking_rack/rake_task"
-BakingRack::RakeTask.new
+directory = "site"
+
+BakingRack::RakeTask.new(
+  builder: BakingRack::Builder.new(output_directory: directory) do |b|
+    # same usage as BakingRack::Build.run above
+  end,
+  deployer: BakingRack::Deployers::AwsS3.new(
+    directory: directory,
+    bucket_name: "my-bucket.com",
+  ),
+)
 ```
 
 ```bash
