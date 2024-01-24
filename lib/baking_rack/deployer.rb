@@ -90,8 +90,8 @@ module BakingRack
         nil
       end
 
-      def ==(obj)
-        obj.class == self.class && obj.directory == directory && obj.path == path
+      def ==(other)
+        other.class == self.class && other.directory == directory && other.path == path
       end
     end
 
