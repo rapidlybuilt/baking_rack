@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "baking_rack"
 require "rake"
 require "rake/tasklib"
 

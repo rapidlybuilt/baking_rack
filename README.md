@@ -65,7 +65,7 @@ end
 
 # Step 2: deploy what was built
 BakingRack::AwsS3::Deployer.run(
-  directory: directory,
+  source_directory: directory,
   bucket_name: "my-bucket.com",
 )
 ```
@@ -82,7 +82,7 @@ BakingRack::RakeTask.new(
     # same usage as BakingRack::Build.run above
   end,
   deployer: BakingRack::Deployers::AwsS3.new(
-    directory: directory,
+    source_directory: directory,
     bucket_name: "my-bucket.com",
   ),
 )
@@ -132,6 +132,7 @@ Your Access Key and Secret Access Keys are read from your AWS config or ENV.
 
 ```ruby
 BakingRack::AwsS3::Deployer.new(
+  source_directory: "tmp/site",
   bucket_name: "your-bucket.com", # bucket containing your static files
 )
 ```
