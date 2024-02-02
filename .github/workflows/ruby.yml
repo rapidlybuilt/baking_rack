@@ -35,7 +35,6 @@ jobs:
     name: Ruby ${{ matrix.ruby }}
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false # don't fail all matrix builds if one fails
       matrix:
         ruby:
           - '3.1'
