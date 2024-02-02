@@ -3,8 +3,12 @@
 require "spec_helper"
 
 RSpec.describe BakingRack::Deployer do
-  let(:source_directory) { "tmp/test" }
+  let(:source_directory) { BakingRack.build_directory }
   let(:deployer) { described_class.new(source_directory:) }
+
+  before do
+    FileUtils.mkdir_p(source_directory)
+  end
 
   after do
     FileUtils.rm_rf(source_directory)
@@ -34,6 +38,11 @@ RSpec.describe BakingRack::Deployer do
     expect(deployer).not_to receive(:unchanged?)
 
     deployer.run
+  end
+
+  it "raises an error when the source directory is missing" do
+    FileUtils.rm_rf(source_directory)
+    expect{deployer}.to raise_error(BakingRack::DirectoryMissingError)
   end
 
   describe "ignoring files" do

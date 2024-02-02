@@ -63,8 +63,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build and publish gem
-      # allow publishing new version w/o new version number (bad form)
-      continue-on-error: true
       uses: jstastny/publish-gem-to-github@master
       with:
         token: ${{ secrets.GITHUB_TOKEN }}

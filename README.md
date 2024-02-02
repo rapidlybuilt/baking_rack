@@ -84,6 +84,7 @@ BakingRack::RakeTask.new(
   deployer: BakingRack::Deployers::AwsS3.new(
     source_directory: directory,
     bucket_name: "my-bucket.com",
+    dry_run: ENV["DRY_RUN"].present?, # see "Dry Run" below
   ),
 )
 ```
@@ -101,6 +102,10 @@ $ rake baking_rack:publish
 # remove all build files
 $ rake baking_rack:clean
 ```
+
+### Dry Run
+
+Deployers support the `dry_run` keyword argument which instructs it to output what will be deployed without actually performing it.
 
 ### Ruby on Rails
 

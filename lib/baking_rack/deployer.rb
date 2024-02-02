@@ -7,10 +7,13 @@ module BakingRack
     attr_reader :source_directory
     attr_reader :ignored_filenames
 
-    def initialize(source_directory:, ignored_filenames: %w[.DS_Store], force_all: false)
+    def initialize(source_directory: BakingRack.build_directory, ignored_filenames: %w[.DS_Store], force_all: false, dry_run: false)
       @source_directory = source_directory
       @ignored_filenames = ignored_filenames
       @force_all = force_all
+      @dry_run = dry_run
+
+      ensure_source_directory
     end
 
     def run
@@ -23,6 +26,10 @@ module BakingRack
 
     def force_all?
       @force_all
+    end
+
+    def dry_run?
+      @dry_run
     end
 
   private
@@ -63,6 +70,12 @@ module BakingRack
 
     def fingerprinted?(path)
       !(File.basename(path) =~ /[0-9a-f]{16}/).nil?
+    end
+
+    def ensure_source_directory
+      return if File.directory?(source_directory)
+
+      raise DirectoryMissingError, source_directory
     end
 
     class DeployFile

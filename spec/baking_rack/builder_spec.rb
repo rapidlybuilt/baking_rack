@@ -3,7 +3,7 @@
 require "spec_helper"
 
 RSpec.describe BakingRack::Builder do
-  let(:output_directory) { "tmp/test" }
+  let(:output_directory) { BakingRack.build_directory }
   let(:domain_name) { "example.com" }
   let(:html_content) { "<p>Hi!</p>" }
 

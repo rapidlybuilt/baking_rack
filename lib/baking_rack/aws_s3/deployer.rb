@@ -8,8 +8,8 @@ module BakingRack
     class Deployer < BakingRack::Deployer
       attr_reader :bucket_name
 
-      def initialize(source_directory:, bucket_name:, force_all: false)
-        super(source_directory:, force_all:)
+      def initialize(bucket_name:, **kargs)
+        super(**kargs)
 
         @bucket_name = bucket_name
       end
@@ -63,7 +63,7 @@ module BakingRack
 
       def s3_upload_file(key, properties)
         puts "Uploading: #{key}"
-        s3_bucket.object(key).put(properties)
+        s3_bucket.object(key).put(properties) unless dry_run?
       end
     end
   end

@@ -3,12 +3,16 @@
 module BakingRack
   module Rails
     class Builder < BakingRack::Builder
+      class InvalidRailsEnvironmentError < Error; end
+
       def initialize(app: ::Rails.application,
-                     output_directory: "tmp/baking_rack",
+                     output_directory: BakingRack.build_directory,
                      domain_name: nil, &block)
         super(app:, output_directory:, domain_name:, &block)
 
         self.public_directory = "public"
+
+        ensure_production_environment
       end
 
       def run
@@ -40,6 +44,12 @@ module BakingRack
 
       def bundle_exec(command)
         system({ "RAILS_ENV" => "production" }, "bundle exec #{command}")
+      end
+
+      def ensure_production_environment
+        return if ::Rails.env.production?
+
+        raise InvalidRailsEnvironmentError, ::Rails.env.to_s
       end
     end
   end
