@@ -6,7 +6,7 @@ SimpleCov.start do
 end
 
 require "baking_rack"
-require "debug"
+require "debug" unless ENV.key?("GITHUB_ACTION")
 
 BakingRack.build_directory = "tmp/specs"
 
