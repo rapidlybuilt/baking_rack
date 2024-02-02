@@ -92,7 +92,7 @@ module BakingRack
       FileUtils.mkdir_p(output_directory)
       Dir.glob(pattern, File::FNM_DOTMATCH).each do |path|
         basename = File.basename(path)
-        next if basename == "."
+        next if %w[. ..].include?(basename)
 
         if File.directory?(path)
           FileUtils.cp_r(path, File.join(output_directory, destination_folder))
