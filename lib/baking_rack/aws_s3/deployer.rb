@@ -62,7 +62,7 @@ module BakingRack
         end
       end
 
-      def s3_upload_file(file, key, properties)
+      def s3_upload_file(_file, key, properties)
         s3_bucket.object(key).put(properties) unless dry_run?
       end
     end

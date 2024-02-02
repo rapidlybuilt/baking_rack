@@ -15,7 +15,7 @@ module BakingRack
 
     attr_writer :uri
 
-    def initialize(app:, output_directory: BakingRack.build_directory, domain_name:)
+    def initialize(app:, domain_name:, output_directory: BakingRack.build_directory)
       @app = app
       @output_directory = File.expand_path(output_directory)
       @domain_name = domain_name

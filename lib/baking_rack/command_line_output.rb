@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "colorized_string"
 
 module BakingRack
@@ -14,14 +16,12 @@ module BakingRack
     # builder listener interface
     def build_started(builder)
       # HACK: don't display server logs unless in verbose mode
-      if defined?(::Rails) && !verbose?
-        ::Rails.logger.level = :warn
-      end
+      ::Rails.logger.level = :warn if defined?(::Rails) && !verbose?
 
       debug { "#{colorize :yellow, "Build started"} #{builder.inspect}" }
     end
 
-    def build_finished(builder)
+    def build_finished(_builder)
       debug { colorize :yellow, "Build finished" }
     end
 
@@ -29,7 +29,7 @@ module BakingRack
       debug { "#{colorize :yellow, "Clean started"} #{builder.inspect}" }
     end
 
-    def clean_finished(builder)
+    def clean_finished(_builder)
       debug { colorize :yellow, "Clean finished" }
     end
 
@@ -49,23 +49,25 @@ module BakingRack
       debug { colorize :yellow, "Building #{static_routes.length} static routes" }
     end
 
+    # rubocop:disable Lint/UnusedMethodArgument
     def static_route_requested(static_route:, request:, response:)
       status = response[0]
       color = static_route.status.to_s == status.to_s ? :green : :red
 
       info { "#{colorize color, status.to_s} #{static_route.path}" }
     end
+    # rubocop:enable Lint/UnusedMethodArgument
 
     def build_static_routes_finished(static_routes)
       debug { colorize :yellow, "Built #{static_routes.length} static routes" }
     end
 
     # deployer listener interface
-    def deploy_started(deployer)
+    def deploy_started(_deployer)
       debug { colorize :yellow, "Deploy started" }
     end
 
-    def deploy_finished(deployer)
+    def deploy_finished(_deployer)
       debug { colorize :yellow, "Deploy finished" }
     end
 
@@ -81,18 +83,20 @@ module BakingRack
 
     def system_exec_started(command, env: {})
       debug do
-        env_string = env.inject("") do |s, (k,v)|
-          s += "#{k}=#{v} "
+        env_string = env.inject("") do |s, (k, v)|
+          s + "#{k}=#{v} "
         end
 
         colorize :yellow, "#{env_string}#{command}"
       end
     end
 
-    def system_exec_finished(command, env: {}, stdout:, stderr:, status:)
+    # rubocop:disable Lint/UnusedMethodArgument
+    def system_exec_finished(_command, stdout:, stderr:, status:, env: {})
       debug { stdout }
       debug { stderr }
     end
+    # rubocop:enable Lint/UnusedMethodArgument
 
   private
 

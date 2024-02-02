@@ -9,7 +9,8 @@ module BakingRack
     attr_reader :source_directory
     attr_reader :ignored_filenames
 
-    def initialize(source_directory: BakingRack.build_directory, ignored_filenames: %w[.DS_Store], force_all: false, dry_run: false)
+    def initialize(source_directory: BakingRack.build_directory, ignored_filenames: %w[.DS_Store], force_all: false,
+                   dry_run: false)
       @source_directory = source_directory
       @ignored_filenames = ignored_filenames
       @force_all = force_all
