@@ -3,6 +3,7 @@
 require "baking_rack"
 require "rake"
 require "rake/tasklib"
+require "optparse"
 
 module BakingRack
   # Provides a custom rake tasks.
@@ -13,6 +14,10 @@ module BakingRack
     def initialize(builder:, deployer:, namespace: :baking_rack, **_kargs)
       super()
       @namespace = namespace
+      @cli_output = CommandLineOutput.new(verbose: ENV.key?("VERBOSE"))
+
+      builder.add_observer(@cli_output)
+      deployer.add_observer(@cli_output)
 
       desc "Renders all static webpages and their assets to a build directory"
       task task_name("build") => app_requirement_tasks do

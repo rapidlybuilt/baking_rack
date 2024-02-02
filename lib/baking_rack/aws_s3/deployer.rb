@@ -26,7 +26,8 @@ module BakingRack
 
         headers_out[:website_redirect_location] = file.redirect_location if file.redirect?
 
-        s3_upload_file(key, headers_out)
+        s3_upload_file(file, key, headers_out)
+        super
       end
 
     private
@@ -61,8 +62,7 @@ module BakingRack
         end
       end
 
-      def s3_upload_file(key, properties)
-        puts "Uploading: #{key}"
+      def s3_upload_file(file, key, properties)
         s3_bucket.object(key).put(properties) unless dry_run?
       end
     end

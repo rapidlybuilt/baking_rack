@@ -11,18 +11,6 @@ module BakingRack
         super(app:, output_directory:, domain_name:, &block)
 
         self.public_directory = "public"
-
-        ensure_production_environment
-      end
-
-      def run
-        bundle_exec "rake assets:precompile"
-        super
-      end
-
-      def clean
-        bundle_exec "rake assets:clobber"
-        super
       end
 
       def domain_name
@@ -30,6 +18,18 @@ module BakingRack
       end
 
     private
+
+      def run_build
+        ensure_production_environment
+        bundle_exec "rake assets:precompile"
+        remove_file "public/assets/.manifest.json"
+        super
+      end
+
+      def run_clean
+        bundle_exec "rake assets:clobber"
+        super
+      end
 
       # TODO: helper to add ALL Rails routes as 200 or 301
       def static_routes_context

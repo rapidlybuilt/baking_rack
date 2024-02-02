@@ -4,6 +4,8 @@ require "mime-types"
 
 module BakingRack
   class Deployer
+    include Observable
+
     attr_reader :source_directory
     attr_reader :ignored_filenames
 
@@ -12,16 +14,22 @@ module BakingRack
       @ignored_filenames = ignored_filenames
       @force_all = force_all
       @dry_run = dry_run
-
-      ensure_source_directory
     end
 
     def run
+      notify_observers :deploy_started
+      ensure_source_directory
+
       source_files.each do |path|
         file = DeployFile.new(source_directory, path)
 
-        upload_file(file) unless ignored?(file) || (!force_all? && unchanged?(file))
+        if ignored?(file) || (!force_all? && unchanged?(file))
+          skip_file(file)
+        else
+          upload_file(file)
+        end
       end
+      notify_observers :deploy_finished
     end
 
     def force_all?
@@ -34,8 +42,12 @@ module BakingRack
 
   private
 
+    def skip_file(file)
+      notify_observers :deploy_file_skipped, file
+    end
+
     def upload_file(file)
-      raise NotImplementedError, "#{self.class.name} must implement #upload_file"
+      notify_observers :file_deployed, file
     end
 
     def content_type_for(path)

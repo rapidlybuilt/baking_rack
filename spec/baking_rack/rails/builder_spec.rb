@@ -51,7 +51,7 @@ RSpec.describe BakingRack::Rails::Builder do
 
   it "raises an error when run outside of RAILS_ENV=production" do
     expect(rails_env).to receive(:production?).and_return(false)
-    expect{builder}.to raise_error(BakingRack::Rails::Builder::InvalidRailsEnvironmentError)
+    expect{builder.run}.to raise_error(BakingRack::Rails::Builder::InvalidRailsEnvironmentError)
   end
 
   class RailsApp

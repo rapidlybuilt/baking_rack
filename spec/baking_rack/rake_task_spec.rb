@@ -5,8 +5,8 @@ require "spec_helper"
 # This whole thing is HACK-y.
 
 RSpec.describe BakingRack::RakeTask do
-  let(:builder) { double("builder") }
-  let(:deployer) { double("deployer") }
+  let(:builder) { double("builder", add_observer: nil) }
+  let(:deployer) { double("deployer", add_observer: nil) }
 
   it "defines some rake tasks" do
     rake = described_class.new(builder:, deployer:)

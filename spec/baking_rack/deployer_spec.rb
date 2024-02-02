@@ -42,7 +42,7 @@ RSpec.describe BakingRack::Deployer do
 
   it "raises an error when the source directory is missing" do
     FileUtils.rm_rf(source_directory)
-    expect{deployer}.to raise_error(BakingRack::DirectoryMissingError)
+    expect{deployer.run}.to raise_error(BakingRack::DirectoryMissingError)
   end
 
   describe "ignoring files" do
@@ -82,6 +82,30 @@ RSpec.describe BakingRack::Deployer do
 
       expect(file.redirect?).to eql(false)
       expect(file.redirect_location).to eql(nil)
+    end
+  end
+
+  describe "CommandLineOutput" do
+    let(:io) { double("io", puts: nil) }
+    let(:observer) { BakingRack::CommandLineOutput.new(io:, verbose: true) }
+
+    it "outputs uploaded filenames" do
+      write_file "favicon.ico", "BINARY"
+
+      expect(io).to receive(:puts).with("#{colorize :green, "Uploaded"} favicon.ico")
+
+      deployer.add_observer(observer)
+      deployer.run
+    end
+
+    it "outputs skipped filenames" do
+      write_file "favicon.ico", "BINARY"
+
+      expect(deployer).to receive(:unchanged?).with(deploy_file("favicon.ico")).and_return(true)
+      expect(io).to receive(:puts).with("#{colorize :yellow, "Skipped "} favicon.ico")
+
+      deployer.add_observer(observer)
+      deployer.run
     end
   end
 

@@ -5,6 +5,8 @@ require "rack"
 module BakingRack
   # rubocop:disable Metrics/ClassLength
   class Builder
+    include Observable
+
     attr_accessor :app
     attr_accessor :output_directory
     attr_accessor :domain_name
@@ -48,12 +50,15 @@ module BakingRack
     end
 
     def run
-      copy_public_directory if public_directory
-      build_static_routes
+      notify_observers :build_started
+      run_build
+      notify_observers :build_finished
     end
 
     def clean
-      remove_directory(output_directory)
+      notify_observers :clean_started
+      run_clean
+      notify_observers :clean_finished
     end
 
     def uri
@@ -62,11 +67,22 @@ module BakingRack
 
   private
 
+    def run_build
+      copy_public_directory if public_directory
+      build_static_routes
+    end
+
+    def run_clean
+      remove_directory(output_directory)
+    end
+
     def copy_public_directory
       copy_directory(public_directory)
     end
 
     def copy_directory(directory, destination_folder = "/")
+      notify_observers :build_directory_copied, directory, destination_folder
+
       # cannot use FileUtils.cp_r because we want to guarantee:
       # public/404.html -> output_directory/404.html
       # NOT output_directory/public/404.html
@@ -88,7 +104,13 @@ module BakingRack
     end
 
     def remove_directory(directory)
+      notify_observers :build_directory_removed, directory
       FileUtils.rm_rf(directory)
+    end
+
+    def remove_file(path)
+      notify_observers :build_file_removed, path
+      FileUtils.rm_f(path)
     end
 
     def static_routes_context
@@ -96,9 +118,13 @@ module BakingRack
     end
 
     def build_static_routes
+      notify_observers :build_static_routes_started, static_routes
+
       static_routes.each do |static_route|
         build_static_route(static_route)
       end
+
+      notify_observers :build_static_routes_finished, static_routes
     end
 
     def build_static_route(static_route)
@@ -117,6 +143,8 @@ module BakingRack
 
       request = self.class.generate_request(uri)
       response = app.call(request)
+
+      notify_observers(:static_route_requested, static_route:, request:, response:)
 
       unless response[0].to_i == status.to_i
         raise UnexpectedStatusCode, "got #{response[0]}, expected #{status} for #{uri}"

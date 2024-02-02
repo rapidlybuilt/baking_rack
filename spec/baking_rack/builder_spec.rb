@@ -6,6 +6,10 @@ RSpec.describe BakingRack::Builder do
   let(:output_directory) { BakingRack.build_directory }
   let(:domain_name) { "example.com" }
   let(:html_content) { "<p>Hi!</p>" }
+  let(:builder) { described_class.new(app: basic_app, output_directory:, domain_name:) }
+
+  let(:io) { double("io", puts: nil) }
+  let(:observer) { BakingRack::CommandLineOutput.new(io:, verbose: true) }
 
   let(:basic_app) do
     # Rack app that returns HTML contenet for all URLs
@@ -100,9 +104,20 @@ RSpec.describe BakingRack::Builder do
     end
 
     it "protects against writing files outside the output directory" do
-      builder = described_class.new(app: basic_app, output_directory:, domain_name:)
-
       expect{builder.send(:write_file, "../Rakefile", "foo") }.to raise_error(ArgumentError)
+    end
+
+    it "notifies observers about specific routes" do
+      builder = described_class.new(app: basic_app, output_directory:, domain_name:) do |b|
+        b.define_static_routes do
+          get "/"
+        end
+      end
+
+      expect(io).to receive(:puts).with("#{colorize :green, "200"} /")
+
+      builder.add_observer(observer)
+      builder.run
     end
   end
 
@@ -114,6 +129,13 @@ RSpec.describe BakingRack::Builder do
       builder.clean
 
       expect(File.directory?(output_directory)).to eql(false)
+    end
+
+    it "notifies observers when the clean is started and finished" do
+      builder.add_observer(observer)
+      expect(io).to receive(:puts).with("#{colorize :yellow, "Clean started"} #{builder.inspect}")
+      expect(io).to receive(:puts).with(colorize :yellow, "Clean finished")
+      builder.clean
     end
   end
 
