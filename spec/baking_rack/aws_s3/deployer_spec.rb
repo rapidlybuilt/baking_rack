@@ -6,18 +6,18 @@ RSpec.describe BakingRack::AwsS3::Deployer do
   let(:s3) { double(:s3, bucket: s3_bucket) }
   let(:s3_bucket) { double(:s3_bucket) }
   let(:bucket_name) { "my-bucket" }
-  let(:source_directory) { BakingRack.build_directory }
+  let(:build_directory) { BakingRack.build_directory }
 
   before do
     allow(Aws::S3::Resource).to receive(:new).and_return(s3)
   end
 
   before do
-    FileUtils.mkdir_p(source_directory)
+    FileUtils.mkdir_p(build_directory)
   end
 
   after do
-    FileUtils.rm_rf(source_directory)
+    FileUtils.rm_rf(build_directory)
   end
 
   it "writes new files to S3" do
@@ -112,16 +112,16 @@ RSpec.describe BakingRack::AwsS3::Deployer do
   private
 
   def deployer(**kargs)
-    described_class.new(**{source_directory:, bucket_name:}.merge(kargs))
+    described_class.new(**{build_directory:, bucket_name:}.merge(kargs))
   end
 
   def deploy_file(path)
-    BakingRack::Deployer::DeployFile.new(source_directory, path)
+    BakingRack::Deployer::DeployFile.new(build_directory, path)
   end
 
   def write_file(path, content)
-    FileUtils.mkdir_p(File.join(source_directory, File.dirname(path)))
-    File.write(File.join(source_directory, path), content)
+    FileUtils.mkdir_p(File.join(build_directory, File.dirname(path)))
+    File.write(File.join(build_directory, path), content)
   end
 
   def expect_s3_put(path:, **properties)

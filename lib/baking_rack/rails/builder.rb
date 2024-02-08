@@ -6,9 +6,9 @@ module BakingRack
       class InvalidRailsEnvironmentError < Error; end
 
       def initialize(app: ::Rails.application,
-                     output_directory: BakingRack.build_directory,
+                     build_directory: BakingRack.build_directory,
                      domain_name: nil, &block)
-        super(app:, output_directory:, domain_name:, &block)
+        super(app:, build_directory:, domain_name:, &block)
 
         self.public_directory = "public"
       end

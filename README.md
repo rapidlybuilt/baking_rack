@@ -46,7 +46,7 @@ Ruby API:
 directory = "site"
 
 # Step 1: build the webpages
-BakingRack::Build.run(app: Rails.application, output_directory: directory) do |b|
+BakingRack::Build.run(app: Rails.application) do |b|
   b.domain_name = "my-domain.com"
 
   b.define_static_routes do
@@ -65,7 +65,6 @@ end
 
 # Step 2: deploy what was built
 BakingRack::AwsS3::Deployer.run(
-  source_directory: directory,
   bucket_name: "my-bucket.com",
 )
 ```
@@ -75,14 +74,12 @@ Rake CLI:
 ```ruby
 # Rakefile
 require "baking_rack/rake_task"
-directory = "site"
 
 BakingRack::RakeTask.new(
-  builder: BakingRack::Builder.new(output_directory: directory) do |b|
+  builder: BakingRack::Builder.new do |b|
     # same usage as BakingRack::Build.run above
   end,
   deployer: BakingRack::Deployers::AwsS3.new(
-    source_directory: directory,
     bucket_name: "my-bucket.com",
     dry_run: ENV["DRY_RUN"].present?, # see "Dry Run" below
   ),
@@ -90,7 +87,7 @@ BakingRack::RakeTask.new(
 ```
 
 ```bash
-# compiles the static site into the output directory
+# compiles the static site into the build directory
 $ rake baking_rack:build
 
 # uploads the directory files to the static web hosting service.
@@ -112,7 +109,7 @@ Deployers support the `dry_run` keyword argument which instructs it to output wh
 `BakingRack` provides some additional help for building static webpages from Ruby on Rails applications, just use its custom builder class:
 
 ```ruby
-BakingRack::Rails::Build.run(output_directory: directory) do |b|
+BakingRack::Rails::Build.run(build_directory: directory) do |b|
   b.static_routes do
     # path helpers are exposed here
     get root_path
@@ -137,7 +134,6 @@ Your Access Key and Secret Access Keys are read from your AWS config or ENV.
 
 ```ruby
 BakingRack::AwsS3::Deployer.new(
-  source_directory: "tmp/site",
   bucket_name: "your-bucket.com", # bucket containing your static files
 )
 ```

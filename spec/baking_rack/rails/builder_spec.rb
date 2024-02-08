@@ -3,10 +3,10 @@
 require "spec_helper"
 
 RSpec.describe BakingRack::Rails::Builder do
-  let(:output_directory) { BakingRack.build_directory }
+  let(:build_directory) { BakingRack.build_directory }
   let(:html_content) { "<p>Hi!</p>" }
   let(:app) { RailsApp }
-  let(:builder) { described_class.new(app:, output_directory:) }
+  let(:builder) { described_class.new(app:, build_directory:) }
   let(:rails_const) { double("Rails", env: rails_env) }
   let(:rails_env) { double("env", production?: true) }
 
@@ -18,7 +18,7 @@ RSpec.describe BakingRack::Rails::Builder do
   end
 
   after do
-    FileUtils.rm_rf(output_directory)
+    FileUtils.rm_rf(build_directory)
   end
 
   it "defaults to copying the public directory" do

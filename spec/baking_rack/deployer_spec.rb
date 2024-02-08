@@ -3,15 +3,15 @@
 require "spec_helper"
 
 RSpec.describe BakingRack::Deployer do
-  let(:source_directory) { BakingRack.build_directory }
-  let(:deployer) { described_class.new(source_directory:) }
+  let(:build_directory) { BakingRack.build_directory }
+  let(:deployer) { described_class.new(build_directory:) }
 
   before do
-    FileUtils.mkdir_p(source_directory)
+    FileUtils.mkdir_p(build_directory)
   end
 
   after do
-    FileUtils.rm_rf(source_directory)
+    FileUtils.rm_rf(build_directory)
   end
 
   it "uploads multiple files" do
@@ -34,21 +34,21 @@ RSpec.describe BakingRack::Deployer do
   end
 
   it "uploads unchanged files when told to force-all" do
-    deployer = described_class.new(source_directory:, force_all: true)
+    deployer = described_class.new(build_directory:, force_all: true)
     expect(deployer).not_to receive(:unchanged?)
 
     deployer.run
   end
 
   it "raises an error when the source directory is missing" do
-    FileUtils.rm_rf(source_directory)
+    FileUtils.rm_rf(build_directory)
     expect{deployer.run}.to raise_error(BakingRack::DirectoryMissingError)
   end
 
   describe "ignoring files" do
     it "skips ignored filenames" do
       write_file "favicon.ico", "BINARY"
-      deployer = described_class.new(source_directory:, ignored_filenames: %w[favicon.ico])
+      deployer = described_class.new(build_directory:, ignored_filenames: %w[favicon.ico])
       expect(deployer).not_to receive(:unchanged?)
       expect(deployer).not_to receive(:upload_file)
 
@@ -112,11 +112,11 @@ RSpec.describe BakingRack::Deployer do
   private
 
   def deploy_file(path)
-    BakingRack::Deployer::DeployFile.new(source_directory, path)
+    BakingRack::Deployer::DeployFile.new(build_directory, path)
   end
 
   def write_file(path, content)
-    FileUtils.mkdir_p(File.join(source_directory, File.dirname(path)))
-    File.write(File.join(source_directory, path), content)
+    FileUtils.mkdir_p(File.join(build_directory, File.dirname(path)))
+    File.write(File.join(build_directory, path), content)
   end
 end

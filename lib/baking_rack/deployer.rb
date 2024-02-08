@@ -6,12 +6,12 @@ module BakingRack
   class Deployer
     include Observable
 
-    attr_reader :source_directory
+    attr_reader :build_directory
     attr_reader :ignored_filenames
 
-    def initialize(source_directory: BakingRack.build_directory, ignored_filenames: %w[.DS_Store], force_all: false,
+    def initialize(build_directory: BakingRack.build_directory, ignored_filenames: %w[.DS_Store], force_all: false,
                    dry_run: false)
-      @source_directory = source_directory
+      @build_directory = build_directory
       @ignored_filenames = ignored_filenames
       @force_all = force_all
       @dry_run = dry_run
@@ -19,10 +19,10 @@ module BakingRack
 
     def run
       notify_observers :deploy_started
-      ensure_source_directory
+      ensure_build_directory
 
       source_files.each do |path|
-        file = DeployFile.new(source_directory, path)
+        file = DeployFile.new(build_directory, path)
 
         if ignored?(file) || (!force_all? && unchanged?(file))
           skip_file(file)
@@ -59,7 +59,7 @@ module BakingRack
     end
 
     def source_files
-      pattern = File.join(source_directory, "**", "*")
+      pattern = File.join(build_directory, "**", "*")
       files = Dir.glob(pattern, File::FNM_DOTMATCH)
 
       files.delete_if do |path|
@@ -67,7 +67,7 @@ module BakingRack
       end
 
       files.collect do |file|
-        file[source_directory.length + 1..]
+        file[build_directory.length + 1..]
       end
     end
 
@@ -85,10 +85,10 @@ module BakingRack
       !(File.basename(path) =~ /[0-9a-f]{16}/).nil?
     end
 
-    def ensure_source_directory
-      return if File.directory?(source_directory)
+    def ensure_build_directory
+      return if File.directory?(build_directory)
 
-      raise DirectoryMissingError, source_directory
+      raise DirectoryMissingError, build_directory
     end
 
     class DeployFile

@@ -8,16 +8,16 @@ module BakingRack
     include Observable
 
     attr_accessor :app
-    attr_accessor :output_directory
+    attr_accessor :build_directory
     attr_accessor :domain_name
     attr_accessor :public_directory
     attr_accessor :index_filename
 
     attr_writer :uri
 
-    def initialize(app:, domain_name:, output_directory: BakingRack.build_directory)
+    def initialize(app:, domain_name:, build_directory: BakingRack.build_directory)
       @app = app
-      @output_directory = File.expand_path(output_directory)
+      @build_directory = File.expand_path(build_directory)
       @domain_name = domain_name
       @index_filename = "index.html"
 
@@ -73,7 +73,7 @@ module BakingRack
     end
 
     def run_clean
-      remove_directory(output_directory)
+      remove_directory(build_directory)
     end
 
     def copy_public_directory
@@ -84,20 +84,20 @@ module BakingRack
       notify_observers :build_directory_copied, directory, destination_folder
 
       # cannot use FileUtils.cp_r because we want to guarantee:
-      # public/404.html -> output_directory/404.html
-      # NOT output_directory/public/404.html
+      # public/404.html -> build_directory/404.html
+      # NOT build_directory/public/404.html
 
       pattern = File.join(directory, "*")
 
-      FileUtils.mkdir_p(output_directory)
+      FileUtils.mkdir_p(build_directory)
       Dir.glob(pattern, File::FNM_DOTMATCH).each do |path|
         basename = File.basename(path)
         next if %w[. ..].include?(basename)
 
         if File.directory?(path)
-          FileUtils.cp_r(path, File.join(output_directory, destination_folder))
+          FileUtils.cp_r(path, File.join(build_directory, destination_folder))
         else
-          dest = File.join(output_directory, destination_folder, basename)
+          dest = File.join(build_directory, destination_folder, basename)
           FileUtils.cp(path, dest)
         end
       end
@@ -154,10 +154,10 @@ module BakingRack
     end
 
     def write_file(path, content)
-      filename = File.expand_path(File.join(output_directory, path))
+      filename = File.expand_path(File.join(build_directory, path))
 
       # prevent URLs from navigating outside the output directory with ../.. cleverness.
-      raise ArgumentError, "invalid URL: #{path}" unless filename.start_with?(output_directory)
+      raise ArgumentError, "invalid URL: #{path}" unless filename.start_with?(build_directory)
 
       FileUtils.mkdir_p(File.dirname(filename))
       File.write(filename, content)
