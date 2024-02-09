@@ -9,7 +9,8 @@ module BakingRack
     attr_reader :build_directory
     attr_reader :ignored_filenames
 
-    def initialize(build_directory: BakingRack.config.build_directory, ignored_filenames: BakingRack.config.ignored_filenames)
+    def initialize(build_directory: BakingRack.config.build_directory,
+                   ignored_filenames: BakingRack.config.ignored_filenames)
       @build_directory = build_directory
       @ignored_filenames = ignored_filenames
     end
@@ -122,7 +123,7 @@ module BakingRack
     end
 
     module UsesTerraform
-      private
+    private
 
       def terraform_variables
         @terraform_variables ||= {}.tap do |variables|
@@ -137,17 +138,22 @@ module BakingRack
       def parse_terraform_variables(content)
         variables = {}
         content.split("\n").delete_if(&:empty?).each do |line|
-          name, value = line.split("=")
-          next if name.empty? || value.empty?
-
-          name.strip!
-          value.strip!
-          value = value[1..-2] if (value.start_with?('"') && value.end_with?('"')) ||
-                                  (value.start_with?("'") && value.end_with?("'"))
-
+          name, value = parse_terraform_variable_line(line)
           variables[name] = value
         end
         variables
+      end
+
+      def parse_terraform_variable_line(line)
+        name, value = line.split("=")
+        return if name.empty? || value.empty?
+
+        name.strip!
+        value.strip!
+        value = value[1..-2] if (value.start_with?('"') && value.end_with?('"')) ||
+                                (value.start_with?("'") && value.end_with?("'"))
+
+        [name, value]
       end
     end
 

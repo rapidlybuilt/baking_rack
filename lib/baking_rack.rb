@@ -31,4 +31,3 @@ module BakingRack
     end
   end
 end
-

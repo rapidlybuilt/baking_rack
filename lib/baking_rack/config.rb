@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module BakingRack
   class Config
     attr_accessor :build_directory
@@ -15,8 +17,8 @@ module BakingRack
       @deployer = deployer
     end
 
-    def define_static_routes(&block)
-      builder.define_static_routes(&block)
+    def define_static_routes(...)
+      builder.define_static_routes(...)
     end
   end
 end

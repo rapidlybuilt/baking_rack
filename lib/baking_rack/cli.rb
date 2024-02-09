@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "baking_rack"
 require "thor"
 
@@ -45,7 +47,7 @@ module BakingRack
     end
 
     def setup_cli_output
-      @cli_output ||= CommandLineOutput.new(verbose: options.verbose?).tap do |observer|
+      @setup_cli_output ||= CommandLineOutput.new(verbose: options.verbose?).tap do |observer|
         builder&.add_observer(observer)
         deployer&.add_observer(observer)
       end
