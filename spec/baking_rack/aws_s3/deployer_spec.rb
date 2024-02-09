@@ -6,18 +6,9 @@ RSpec.describe BakingRack::AwsS3::Deployer do
   let(:s3) { double(:s3, bucket: s3_bucket) }
   let(:s3_bucket) { double(:s3_bucket) }
   let(:bucket_name) { "my-bucket" }
-  let(:build_directory) { BakingRack.build_directory }
 
   before do
     allow(Aws::S3::Resource).to receive(:new).and_return(s3)
-  end
-
-  before do
-    FileUtils.mkdir_p(build_directory)
-  end
-
-  after do
-    FileUtils.rm_rf(build_directory)
   end
 
   it "writes new files to S3" do
@@ -106,13 +97,31 @@ RSpec.describe BakingRack::AwsS3::Deployer do
     expect(s3_bucket).to receive(:objects).and_return([])
     expect_no_s3_put
 
-    deployer(dry_run: true).run
+    deployer.run(dry_run: true)
+  end
+
+  describe "bucket_name argument" do
+    it "reads the bucket name from the terraform variable file by default" do
+      write_file "terraform/vars.tfvars", <<~FILE
+        bucket_name = "my-bucket"
+      FILE
+
+      stub_terraform_files([
+        File.join(build_directory, "terraform/vars.tfvars"),
+      ])
+
+      expect(described_class.new.bucket_name).to eql("my-bucket")
+    end
+
+    it "raises an error if bucket name was not given and cannot be found" do
+      expect{described_class.new}.to raise_error(ArgumentError, "bucket_name required")
+    end
   end
 
   private
 
   def deployer(**kargs)
-    described_class.new(**{build_directory:, bucket_name:}.merge(kargs))
+    described_class.new(**{bucket_name:}.merge(kargs))
   end
 
   def deploy_file(path)

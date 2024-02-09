@@ -22,8 +22,11 @@ Gem::Specification.new do |gem|
     "rubygems_mfa_required" => "true",
   }
 
+  gem.executables << "baking_rack"
+
   gem.add_dependency "colorize", "~> 1"
   gem.add_dependency "mime-types", "~> 3"
   gem.add_dependency "rack", ">= 2.2.4"
+  gem.add_dependency "thor", "~> 1"
   gem.add_dependency "zeitwerk", "~> 2"
 end

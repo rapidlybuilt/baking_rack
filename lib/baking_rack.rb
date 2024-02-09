@@ -7,6 +7,7 @@ lib_directory = File.expand_path(__dir__)
 
 loader = Zeitwerk::Loader.new
 loader.push_dir(lib_directory)
+loader.ignore(File.join(lib_directory, "baking_rack/cli.rb"))
 loader.ignore(File.join(lib_directory, "baking_rack/version.rb"))
 loader.setup # ready!
 
@@ -16,7 +17,14 @@ module BakingRack
   class DirectoryMissingError < Error; end
 
   class << self
-    attr_accessor :build_directory
+    def config
+      @config ||= Config.new(
+        build_directory: "_site",          # Jekyll's default
+        ignored_filenames: %w[.DS_Store],  # macOS pollution
+      )
+      yield @config if block_given?
+      @config
+    end
 
     def redirect_file_content(location)
       %(<html><body>You are being <a href="#{location}">redirected</a>.</body></html>)
@@ -24,5 +32,3 @@ module BakingRack
   end
 end
 
-# Let's use Jekyll's default as our default
-BakingRack.build_directory = "_site"

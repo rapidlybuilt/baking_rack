@@ -9,15 +9,15 @@ module BakingRack
     attr_reader :build_directory
     attr_reader :ignored_filenames
 
-    def initialize(build_directory: BakingRack.build_directory, ignored_filenames: %w[.DS_Store], force_all: false,
-                   dry_run: false)
+    def initialize(build_directory: BakingRack.config.build_directory, ignored_filenames: BakingRack.config.ignored_filenames)
       @build_directory = build_directory
       @ignored_filenames = ignored_filenames
-      @force_all = force_all
-      @dry_run = dry_run
     end
 
-    def run
+    def run(dry_run: false, force_all: false)
+      @dry_run = dry_run
+      @force_all = force_all
+
       notify_observers :deploy_started
       ensure_build_directory
 
@@ -118,6 +118,36 @@ module BakingRack
 
       def ==(other)
         other.class == self.class && other.directory == directory && other.path == path
+      end
+    end
+
+    module UsesTerraform
+      private
+
+      def terraform_variables
+        @terraform_variables ||= {}.tap do |variables|
+          Dir.glob(File.join("terraform/*.tfvars")).each do |path|
+            content = File.read(path)
+            variables.merge!(parse_terraform_variables(content))
+          end
+        end
+      end
+
+      # HACK: very dumb parser for basic string variables
+      def parse_terraform_variables(content)
+        variables = {}
+        content.split("\n").delete_if(&:empty?).each do |line|
+          name, value = line.split("=")
+          next if name.empty? || value.empty?
+
+          name.strip!
+          value.strip!
+          value = value[1..-2] if (value.start_with?('"') && value.end_with?('"')) ||
+                                  (value.start_with?("'") && value.end_with?("'"))
+
+          variables[name] = value
+        end
+        variables
       end
     end
 

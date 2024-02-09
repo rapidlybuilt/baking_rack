@@ -15,7 +15,7 @@ module BakingRack
 
     attr_writer :uri
 
-    def initialize(app:, domain_name:, build_directory: BakingRack.build_directory)
+    def initialize(app:, domain_name:, build_directory: BakingRack.config.build_directory)
       @app = app
       @build_directory = File.expand_path(build_directory)
       @domain_name = domain_name
@@ -23,6 +23,7 @@ module BakingRack
 
       @static_routes = []
       @static_route_blocks = []
+      @static_routes_ready = true
 
       yield self if block_given?
     end
@@ -30,22 +31,17 @@ module BakingRack
     def define_static_routes(&block)
       # HACK: delay the running of the block so the web framework
       # loads the route helpers.
+      @static_routes_ready = false
+
       @static_route_blocks << block
     end
 
     def static_routes
       raise ArgumentError, "use #define_static_routes for a block" if block_given?
 
-      return @static_routes if @static_routes_built
+      return @static_routes if @static_routes_ready
 
-      @static_routes_built = true
-
-      context = static_routes_context
-
-      @static_route_blocks.each do |block|
-        context.instance_eval(&block)
-      end
-
+      init_static_routes
       @static_routes
     end
 
@@ -115,6 +111,17 @@ module BakingRack
 
     def static_routes_context
       StaticRoutesContext.new(index_filename, @static_routes)
+    end
+
+    def init_static_routes
+      @static_routes = []
+      context = static_routes_context
+
+      @static_route_blocks.each do |block|
+        context.instance_eval(&block)
+      end
+
+      @static_routes_ready = true
     end
 
     def build_static_routes

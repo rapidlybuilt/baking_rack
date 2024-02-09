@@ -3,16 +3,7 @@
 require "spec_helper"
 
 RSpec.describe BakingRack::Deployer do
-  let(:build_directory) { BakingRack.build_directory }
-  let(:deployer) { described_class.new(build_directory:) }
-
-  before do
-    FileUtils.mkdir_p(build_directory)
-  end
-
-  after do
-    FileUtils.rm_rf(build_directory)
-  end
+  let(:deployer) { described_class.new }
 
   it "uploads multiple files" do
     write_file "favicon.ico", "BINARY"
@@ -34,10 +25,10 @@ RSpec.describe BakingRack::Deployer do
   end
 
   it "uploads unchanged files when told to force-all" do
-    deployer = described_class.new(build_directory:, force_all: true)
+    deployer = described_class.new
     expect(deployer).not_to receive(:unchanged?)
 
-    deployer.run
+    deployer.run(force_all: true)
   end
 
   it "raises an error when the source directory is missing" do
@@ -48,7 +39,7 @@ RSpec.describe BakingRack::Deployer do
   describe "ignoring files" do
     it "skips ignored filenames" do
       write_file "favicon.ico", "BINARY"
-      deployer = described_class.new(build_directory:, ignored_filenames: %w[favicon.ico])
+      deployer = described_class.new(ignored_filenames: %w[favicon.ico])
       expect(deployer).not_to receive(:unchanged?)
       expect(deployer).not_to receive(:upload_file)
 
@@ -82,6 +73,31 @@ RSpec.describe BakingRack::Deployer do
 
       expect(file.redirect?).to eql(false)
       expect(file.redirect_location).to eql(nil)
+    end
+  end
+
+  describe "UsesTerraform" do
+    class self::TestModule < BakingRack::Deployer
+      include BakingRack::Deployer::UsesTerraform
+    end
+
+    let(:instance) { self.class::TestModule.new }
+
+    it "reads variables from tfvar files" do
+      write_file "terraform/vars.tfvars", <<~FILE
+        domain_name = "test.com"
+
+        aws_region = "us-east-1"
+      FILE
+
+      stub_terraform_files([
+        File.join(build_directory, "terraform/vars.tfvars"),
+      ])
+
+      expect(instance.send(:terraform_variables)).to eql(
+        "domain_name" => "test.com",
+        "aws_region" => "us-east-1",
+      )
     end
   end
 

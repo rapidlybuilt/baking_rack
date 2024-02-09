@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+
+# Rails apps
+if File.exist?("./config/environment.rb")
+  require "./config/environment.rb"
+end
+
+require_relative "../lib/baking_rack/cli"
+BakingRack::CLI.start

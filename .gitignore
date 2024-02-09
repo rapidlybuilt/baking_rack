@@ -17,6 +17,5 @@ spec/reports
 test/tmp
 test/version_tmp
 tmp
-bin
 plan.txt
 .DS_Store

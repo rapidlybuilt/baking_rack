@@ -3,28 +3,15 @@
 require "spec_helper"
 
 RSpec.describe BakingRack::Builder do
-  let(:build_directory) { BakingRack.build_directory }
-  let(:domain_name) { "example.com" }
   let(:html_content) { "<p>Hi!</p>" }
-  let(:builder) { described_class.new(app: basic_app, build_directory:, domain_name:) }
+  let(:builder) { described_class.new(app: basic_app, domain_name:) }
 
   let(:io) { double("io", puts: nil) }
   let(:observer) { BakingRack::CommandLineOutput.new(io:, verbose: true) }
 
-  let(:basic_app) do
-    # Rack app that returns HTML contenet for all URLs
-    Proc.new do |env|
-      ["200", {"Content-Type" => "text/html"}, [html_content]]
-    end
-  end
-
-  after do
-    FileUtils.rm_rf(build_directory)
-  end
-
   describe "build" do
     it "retrieves a route from the app and writes it to the file" do
-      described_class.run(app: basic_app, build_directory:, domain_name:) do |b|
+      described_class.run(app: basic_app, domain_name:) do |b|
         b.define_static_routes do
           get "/foo.html"
         end
@@ -38,7 +25,7 @@ RSpec.describe BakingRack::Builder do
         ["301", {"Location" => "/bar.html"}, []]
       end
 
-      builder = described_class.new(app:, build_directory:, domain_name:) do |b|
+      builder = described_class.new(app:, domain_name:) do |b|
         b.define_static_routes do
           get "/foo.html", status: 301
         end
@@ -50,7 +37,7 @@ RSpec.describe BakingRack::Builder do
     end
 
     it "raises an error when the returned status differs from the expected one" do
-      builder = described_class.new(app: basic_app, build_directory:, domain_name:) do |b|
+      builder = described_class.new(app: basic_app, domain_name:) do |b|
         b.define_static_routes do
           get "/foo.html", status: 301
         end
@@ -60,7 +47,7 @@ RSpec.describe BakingRack::Builder do
     end
 
     it "appends index.html to naked directories when writing to the file" do
-      builder = described_class.new(app: basic_app, build_directory:, domain_name:) do |b|
+      builder = described_class.new(app: basic_app, domain_name:) do |b|
         b.define_static_routes do
           get "/"
         end
@@ -73,7 +60,7 @@ RSpec.describe BakingRack::Builder do
 
     it "lazily runs #define_static_routes" do
       expect do
-        described_class.new(app: basic_app, build_directory:, domain_name:) do |b|
+        described_class.new(app: basic_app, domain_name:) do |b|
           b.define_static_routes do
             raise "asdf"
           end
@@ -92,7 +79,7 @@ RSpec.describe BakingRack::Builder do
         ["200", {"Content-Type" => "text/html"}, [html_content]]
       end
 
-      builder = described_class.new(app:, build_directory:, domain_name:)
+      builder = described_class.new(app:, domain_name:)
       builder.public_directory = other_directory
 
       builder.run
@@ -108,7 +95,7 @@ RSpec.describe BakingRack::Builder do
     end
 
     it "notifies observers about specific routes" do
-      builder = described_class.new(app: basic_app, build_directory:, domain_name:) do |b|
+      builder = described_class.new(app: basic_app, domain_name:) do |b|
         b.define_static_routes do
           get "/"
         end
@@ -125,7 +112,7 @@ RSpec.describe BakingRack::Builder do
     it "removes the output directory" do
       FileUtils.mkdir_p(build_directory)
 
-      builder = described_class.new(app: basic_app, build_directory:, domain_name:)
+      builder = described_class.new(app: basic_app, domain_name:)
       builder.clean
 
       expect(File.directory?(build_directory)).to eql(false)

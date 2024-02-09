@@ -6,9 +6,11 @@ require "digest"
 module BakingRack
   module AwsS3
     class Deployer < BakingRack::Deployer
+      include UsesTerraform
+
       attr_reader :bucket_name
 
-      def initialize(bucket_name:, **kargs)
+      def initialize(bucket_name: read_bucket_name_from_terraform, **kargs)
         super(**kargs)
 
         @bucket_name = bucket_name
@@ -64,6 +66,10 @@ module BakingRack
 
       def s3_upload_file(_file, key, properties)
         s3_bucket.object(key).put(properties) unless dry_run?
+      end
+
+      def read_bucket_name_from_terraform
+        terraform_variables["bucket_name"] || raise(ArgumentError, "bucket_name required")
       end
     end
   end

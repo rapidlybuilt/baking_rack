@@ -8,7 +8,7 @@ end
 require "baking_rack"
 require "debug" unless ENV.key?("GITHUB_ACTION")
 
-BakingRack.build_directory = "tmp/specs"
+BakingRack.config.build_directory = "tmp/specs"
 
 # ensure simplecov isn't missing anything
 Zeitwerk::Loader.eager_load_all

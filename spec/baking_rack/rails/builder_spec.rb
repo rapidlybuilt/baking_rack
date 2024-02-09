@@ -3,7 +3,6 @@
 require "spec_helper"
 
 RSpec.describe BakingRack::Rails::Builder do
-  let(:build_directory) { BakingRack.build_directory }
   let(:html_content) { "<p>Hi!</p>" }
   let(:app) { RailsApp }
   let(:builder) { described_class.new(app:, build_directory:) }
