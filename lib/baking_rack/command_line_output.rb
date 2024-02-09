@@ -63,8 +63,8 @@ module BakingRack
     end
 
     # deployer listener interface
-    def deploy_started(_deployer)
-      debug { colorize :yellow, "Deploy started" }
+    def deploy_started(deployer)
+      debug { colorize :yellow, "Deploy started #{deployer.inspect}" }
     end
 
     def deploy_finished(_deployer)

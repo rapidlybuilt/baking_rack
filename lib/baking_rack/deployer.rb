@@ -125,35 +125,27 @@ module BakingRack
     module UsesTerraform
     private
 
-      def terraform_variables
-        @terraform_variables ||= {}.tap do |variables|
-          Dir.glob(File.join("terraform/*.tfvars")).each do |path|
-            content = File.read(path)
-            variables.merge!(parse_terraform_variables(content))
-          end
-        end
+      def terraform_directory
+        BakingRack.config.terraform_directory
       end
 
-      # HACK: very dumb parser for basic string variables
-      def parse_terraform_variables(content)
-        variables = {}
-        content.split("\n").delete_if(&:empty?).each do |line|
-          name, value = parse_terraform_variable_line(line)
-          variables[name] = value
-        end
-        variables
+      def terraform_setup?
+        File.directory?(terraform_directory)
       end
 
-      def parse_terraform_variable_line(line)
-        name, value = line.split("=")
-        return if name.empty? || value.empty?
+      def read_terraform_output_value(name)
+        return unless terraform_setup?
 
-        name.strip!
-        value.strip!
-        value = value[1..-2] if (value.start_with?('"') && value.end_with?('"')) ||
-                                (value.start_with?("'") && value.end_with?("'"))
+        stdout, stderr, status = capture_terraform_command("output -raw #{name}")
+        stdout = nil if stdout.empty? || stdout.include?("No outputs found")
+        stdout
+      end
 
-        [name, value]
+      def capture_terraform_command(name)
+        Dir.chdir(terraform_directory) do
+          require "open3"
+          Open3.capture3("terraform #{name}")
+        end
       end
     end
 

@@ -69,7 +69,7 @@ module BakingRack
       end
 
       def read_bucket_name_from_terraform
-        terraform_variables["bucket_name"] || raise(ArgumentError, "bucket_name required")
+        read_terraform_output_value("baking_rack_bucket_name") || raise(ArgumentError, "bucket_name required")
       end
     end
   end

@@ -101,19 +101,21 @@ RSpec.describe BakingRack::AwsS3::Deployer do
   end
 
   describe "bucket_name argument" do
-    it "reads the bucket name from the terraform variable file by default" do
-      write_file "terraform/vars.tfvars", <<~FILE
-        bucket_name = "my-bucket"
-      FILE
+    include TerraformSupport
 
-      stub_terraform_files([
-        File.join(build_directory, "terraform/vars.tfvars"),
-      ])
+    it "reads the bucket name from the terraform variable file by default" do
+      stub_terraform_command "output -raw baking_rack_bucket_name", "my-bucket"
 
       expect(described_class.new.bucket_name).to eql("my-bucket")
     end
 
-    it "raises an error if bucket name was not given and cannot be found" do
+    it "raises an error if bucket name wasn't given and terraform isn't set up" do
+      FileUtils.rm_rf("./terraform")
+      expect{described_class.new}.to raise_error(ArgumentError, "bucket_name required")
+    end
+
+    it "raises an error if bucket name wasn't given and terraform doesn't output `baking_rack_bucket_name`" do
+      stub_terraform_command "output -raw baking_rack_bucket_name", "No outputs found"
       expect{described_class.new}.to raise_error(ArgumentError, "bucket_name required")
     end
   end

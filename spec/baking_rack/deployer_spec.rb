@@ -77,27 +77,28 @@ RSpec.describe BakingRack::Deployer do
   end
 
   describe "UsesTerraform" do
+    include TerraformSupport
+
     class self::TestModule < BakingRack::Deployer
       include BakingRack::Deployer::UsesTerraform
     end
 
     let(:instance) { self.class::TestModule.new }
 
-    it "reads variables from tfvar files" do
-      write_file "terraform/vars.tfvars", <<~FILE
-        domain_name = "test.com"
+    it "reads terraform output values" do
+      stub_terraform_command "output -raw domain_name", "example.com"
 
-        aws_region = "us-east-1"
-      FILE
+      expect(
+        instance.send(:read_terraform_output_value, "domain_name")
+      ).to eql("example.com")
+    end
 
-      stub_terraform_files([
-        File.join(build_directory, "terraform/vars.tfvars"),
-      ])
+    it "returns nil if terraform doesn't have that output name" do
+      stub_terraform_command "output -raw domain_name", "No outputs found"
 
-      expect(instance.send(:terraform_variables)).to eql(
-        "domain_name" => "test.com",
-        "aws_region" => "us-east-1",
-      )
+      expect(
+        instance.send(:read_terraform_output_value, "domain_name")
+      ).to eql(nil)
     end
   end
 
