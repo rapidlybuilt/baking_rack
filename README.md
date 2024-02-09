@@ -69,35 +69,30 @@ BakingRack::AwsS3::Deployer.run(
 )
 ```
 
-Rake CLI:
+CLI:
 
 ```ruby
-# Rakefile
-require "baking_rack/rake_task"
+# config/initializers/baking_rack.rb (in Rails)
 
-BakingRack::RakeTask.new(
-  builder: BakingRack::Builder.new do |b|
+BakingRack.config do |c|
+  c.builder = BakingRack::Builder.new
+  c.deployer = BakingRack::Deployers::AwsS3.new
+
+  c.define_static_routes do
     # same usage as BakingRack::Build.run above
-  end,
-  deployer: BakingRack::Deployers::AwsS3.new(
-    bucket_name: "my-bucket.com",
-    dry_run: ENV["DRY_RUN"].present?, # see "Dry Run" below
-  ),
-)
+  end
+end
 ```
 
 ```bash
-# compiles the static site into the build directory
-$ rake baking_rack:build
+# view available commands
+$ bundle exec baking_rack help
 
-# uploads the directory files to the static web hosting service.
-$ rake baking_rack:deploy
+# view a specific command's options
+$ bundle exec baking_rack help [COMMAND]
 
 # perform the build and deploy
-$ rake baking_rack:publish
-
-# remove all build files
-$ rake baking_rack:clean
+$ bundle exec baking_rack publish
 ```
 
 ### Dry Run
