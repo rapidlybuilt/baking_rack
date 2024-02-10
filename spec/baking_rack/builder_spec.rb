@@ -7,7 +7,7 @@ RSpec.describe BakingRack::Builder do
   let(:builder) { described_class.new(app: basic_app, domain_name:) }
 
   let(:io) { double("io", puts: nil) }
-  let(:observer) { BakingRack::CommandLineOutput.new(io:, verbose: true) }
+  let(:observer) { BakingRack::Commands::Logger.new(io:, verbose: true) }
 
   describe "build" do
     it "retrieves a route from the app and writes it to the file" do

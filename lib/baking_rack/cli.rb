@@ -3,6 +3,7 @@
 require "baking_rack"
 require "thor"
 
+require_relative "commands/logger"
 require_relative "commands/sub_command_base"
 require_relative "commands/install"
 
@@ -53,7 +54,7 @@ module BakingRack
     end
 
     def setup_cli_output
-      @setup_cli_output ||= CommandLineOutput.new(verbose: options.verbose?).tap do |observer|
+      @setup_cli_output ||= Commands::Logger.new(verbose: options.verbose?).tap do |observer|
         builder&.add_observer(observer)
         deployer&.add_observer(observer)
       end
@@ -61,12 +62,12 @@ module BakingRack
 
     def ensure_builder
       setup_cli_output
-      builder || raise("You must set CLI.builder before running!")
+      builder || raise("You must set BakingRack.config.builder before running!")
     end
 
     def ensure_deployer
       setup_cli_output
-      deployer || raise("You must set CLI.deployer before running!")
+      deployer || raise("You must set BakingRack.config.deployer before running!")
     end
 
     def run_build

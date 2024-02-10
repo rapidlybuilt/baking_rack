@@ -2,9 +2,9 @@
 
 require "spec_helper"
 
-RSpec.describe BakingRack::CommandLineOutput do
+RSpec.describe BakingRack::Commands::Logger do
   let(:io) { double("io", puts: nil) }
-  let(:clo) { BakingRack::CommandLineOutput.new(io:, verbose: true) }
+  let(:clo) { described_class.new(io:, verbose: true) }
 
   describe "system events" do
     it "writes the env in front of the command" do

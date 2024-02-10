@@ -76,9 +76,9 @@ RSpec.describe BakingRack::Deployer do
     end
   end
 
-  describe "CommandLineOutput" do
+  describe "CLI Output" do
     let(:io) { double("io", puts: nil) }
-    let(:observer) { BakingRack::CommandLineOutput.new(io:, verbose: true) }
+    let(:observer) { BakingRack::Commands::Logger.new(io:, verbose: true) }
 
     it "outputs uploaded filenames" do
       write_file "favicon.ico", "BINARY"

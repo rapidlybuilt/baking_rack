@@ -24,9 +24,11 @@ module BakingRack
           a.verbose = options.verbose
           a.role_session_name = "GitHub_to_AWS_via_FederatedOIDC"
           a.role_to_assume = options.role_to_assign ||
-            read_terraform_output_value("baking_rack_iam_role_arn") ||
-            raise(ArgumentError, "cannot infer role-to-assign, please provide its value")
+                             read_terraform_output_value("baking_rack_iam_role_arn") ||
+                             raise(ArgumentError, "cannot infer role-to-assign, please provide its value")
         end
+
+        # context = context.send(:binding)
 
         init_install_template_root "github_publish_workflow"
         template "aws_publish.yml", ".github/workflows/publish.yml", context: context.binding
