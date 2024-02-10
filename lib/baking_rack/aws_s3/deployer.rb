@@ -9,18 +9,21 @@ module BakingRack
       include UsesTerraform
 
       attr_reader :bucket_name
+      attr_reader :acl
 
-      def initialize(bucket_name: read_bucket_name_from_terraform, **kargs)
+      def initialize(client: nil, bucket_name: read_bucket_name_from_terraform, acl: "public-read", **kargs)
         super(**kargs)
 
+        @client = client
         @bucket_name = bucket_name
+        @acl = acl
       end
 
       def upload_file(file)
         key = file.path
 
         headers_out = {
-          acl: "public-read",
+          acl:,
           body: file.content,
           content_type: content_type_for(key) || "binary/octet-stream",
           cache_control: cache_control_for(key),
@@ -47,7 +50,7 @@ module BakingRack
 
       def s3
         # (preferred method) AWS credentials are read from ENV
-        @s3 ||= Aws::S3::Resource.new
+        @s3 ||= @client ? Aws::S3::Resource.new(client: @client) : Aws::S3::Resource.new
       end
 
       def s3_bucket
