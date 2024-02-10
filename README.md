@@ -135,18 +135,19 @@ BakingRack::AwsS3::Deployer.new(
 
 If you want terraform to set up your AWS resources required for hosting on S3 and serving via CloudFront, run the following commands:
 
-```ruby
-# Ruby API
-BakingRack::AwsS3::Terraform.generate(aws_s3_deployer)
-```
-
 ```bash
-# Rake CLI
-$ bundle exec rake baking_rack:terraform:aws_s3
+# Generate the terraform files
+$ bundle exec baking_rack install --platform=aws-s3-terraform
+
+# https://developer.hashicorp.com/terraform/tutorials/aws-get-started
+$ cd terraform
+$ terraform init
+$ terraform apply
+$ cd ..
+
+# Generate a GitHub workflow to publish the latest `main` to the S3 bucket
+$ bundle exec baking_rack install --platform=github-publish-workflow
 ```
-
-Then refer to the [Terraform AWS Usage docs](https://developer.hashicorp.com/terraform/tutorials/aws-get-started) (hint: `terraform init` `terraform apply`)
-
 
 ## Contributing
 

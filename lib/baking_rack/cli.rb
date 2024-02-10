@@ -6,6 +6,8 @@ require "thor"
 module BakingRack
   class CLI < Thor
     include Thor::Actions
+    include UsesTerraform
+    include Commands::Install
 
     desc "build", "Renders all static webpages and their assets to a build directory"
     method_options verbose: :boolean
@@ -34,6 +36,12 @@ module BakingRack
     method_options verbose: :boolean
     def clean
       run_clean
+    end
+
+    desc "install", "Creates files for specific use-cases"
+    method_option :platform, required: true, desc: "Use-case to install (options: aws-s3-terraform, terraform-github-publish)"
+    def install
+      run_install
     end
 
   private
