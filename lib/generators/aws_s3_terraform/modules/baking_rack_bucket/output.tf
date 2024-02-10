@@ -3,7 +3,6 @@ output "bucket_name" {
   description = "S3 bucket name that holds the files"
 }
 
-
 output "iam_role_arn" {
   value       = aws_iam_role.s3_bucket_uploader.arn
   description = "ARN of the role available for GitHub Actions to manages files on the AWS S3 bucket"
