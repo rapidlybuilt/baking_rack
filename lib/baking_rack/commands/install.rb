@@ -61,9 +61,14 @@ module BakingRack
         attr_accessor :role_session_name
         attr_accessor :verbose
 
+        # HACK: make this private method public.
+        # Unsure why context.send(:binding) doesn't work but context.binding does.
+
+        # rubocop:disable Lint/UselessMethodDefinition
         def binding
           super
         end
+        # rubocop:enable Lint/UselessMethodDefinition
       end
     end
   end
