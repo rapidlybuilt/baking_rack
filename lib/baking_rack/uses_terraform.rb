@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module BakingRack
   module UsesTerraform
     def terraform_directory
@@ -11,7 +13,7 @@ module BakingRack
     def read_terraform_output_value(name)
       return unless terraform_setup?
 
-      stdout, stderr, status = capture_terraform_command("output -raw #{name}")
+      stdout, = capture_terraform_command("output -raw #{name}")
       stdout = nil if stdout.empty? || stdout.include?("No outputs found")
       stdout
     end

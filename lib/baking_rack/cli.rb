@@ -39,7 +39,8 @@ module BakingRack
     end
 
     desc "install", "Creates files for specific use-cases"
-    method_option :platform, required: true, desc: "Use-case to install (options: aws-s3-terraform, terraform-github-publish)"
+    method_option :platform, required: true,
+                             desc: "Use-case to install (options: aws-s3-terraform, terraform-github-publish)"
     def install
       run_install
     end
