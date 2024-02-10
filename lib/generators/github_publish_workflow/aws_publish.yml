@@ -2,10 +2,10 @@ name: Publish this Rails app as a static site
 
 on:
   push:
-    branches: [ main ]
+    branches: [ <%= branch_name %> ]
 
 env:
-  AWS_REGION : "us-east-1"
+  AWS_REGION : "<%= aws_region %>"
 
 jobs:
   Publish:
@@ -30,14 +30,13 @@ jobs:
       - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v1.7.0
         with:
-          role-to-assume: "<%= iam_role %>"
-          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          role-to-assume: "<%= role_to_assume %>"
+          role-session-name: <%= role_session_name %>
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Publish Site
         env:
           RAILS_ENV: production
           RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
-          VERBOSE: 1
         run: |
-          bundle exec baking_rack publish
+          bundle exec baking_rack publish<%= " --verbose" if verbose %>

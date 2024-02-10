@@ -3,11 +3,12 @@
 require "baking_rack"
 require "thor"
 
+require_relative "commands/sub_command_base"
+require_relative "commands/install"
+
 module BakingRack
   class CLI < Thor
     include Thor::Actions
-    include UsesTerraform
-    include Commands::Install
 
     desc "build", "Renders all static webpages and their assets to a build directory"
     method_options verbose: :boolean
@@ -38,12 +39,8 @@ module BakingRack
       run_clean
     end
 
-    desc "install", "Creates files for specific use-cases"
-    method_option :platform, required: true,
-                             desc: "Use-case to install (options: aws-s3-terraform, terraform-github-publish)"
-    def install
-      run_install
-    end
+    desc "install PLATFORM", "Creates files for specific use-cases"
+    subcommand "install", Commands::Install
 
   private
 
