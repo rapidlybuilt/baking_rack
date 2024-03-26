@@ -137,7 +137,7 @@ If you want terraform to set up your AWS resources required for hosting on S3 an
 
 ```bash
 # Generate the terraform files
-$ bundle exec baking_rack install --platform=aws-s3-terraform
+$ bundle exec baking_rack install:aws_s3_terraform
 
 # https://developer.hashicorp.com/terraform/tutorials/aws-get-started
 $ cd terraform
@@ -146,7 +146,7 @@ $ terraform apply
 $ cd ..
 
 # Generate a GitHub workflow to publish the latest `main` to the S3 bucket
-$ bundle exec baking_rack install --platform=github-publish-workflow
+$ bundle exec baking_rack install:github_publish_workflow
 ```
 
 ## Contributing

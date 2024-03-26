@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
-require "simplecov"
-SimpleCov.start do
-  add_filter "/spec/"
+unless RUBY_ENGINE == "truffleruby"
+  require "simplecov"
+  SimpleCov.start do
+    add_filter "/spec/"
+  end
 end
 
 require "baking_rack"
