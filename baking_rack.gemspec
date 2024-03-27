@@ -24,6 +24,7 @@ Gem::Specification.new do |gem|
 
   gem.executables << "baking_rack"
 
+  gem.add_dependency "base64", "~> 0.2"
   gem.add_dependency "colorize", "~> 1"
   gem.add_dependency "mime-types", "~> 3"
   gem.add_dependency "rack", ">= 2.2.4"
