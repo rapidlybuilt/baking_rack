@@ -10,18 +10,18 @@ resource "aws_iam_openid_connect_provider" "github_openid_provider" {
 
   # AWS says this is deprecated for githubusercontent.com
   thumbprint_list = ["3ea80e902fc385f36bc08193fbc678202d572994"]
-
-  tags = var.common_tags
 }
 
 resource "aws_iam_role" "s3_bucket_uploader" {
   name               = "${var.bucket_name}-uploader"
   assume_role_policy = data.aws_iam_policy_document.s3_bucket_uploader_assumed_role.json
+  tags = local.tags
 }
 
 resource "aws_iam_policy" "s3_bucket_uploader_policy" {
   name   = "${var.bucket_name}-uploader"
   policy = data.aws_iam_policy_document.s3_bucket_uploader_policy.json
+  tags = local.tags
 }
 
 resource "aws_iam_role_policy_attachment" "s3_bucket_uploader_policy_attachment" {

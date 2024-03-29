@@ -1,7 +1,7 @@
 # S3 bucket for website.
 resource "aws_s3_bucket" "main" {
   bucket = var.bucket_name
-  tags   = var.common_tags
+  tags   = local.tags
 }
 
 resource "aws_s3_bucket_policy" "main" {
@@ -23,6 +23,7 @@ resource "aws_s3_bucket_website_configuration" "main" {
 
 resource "aws_s3_bucket_ownership_controls" "main" {
   bucket = aws_s3_bucket.main.id
+
   rule {
     object_ownership = "BucketOwnerPreferred"
   }

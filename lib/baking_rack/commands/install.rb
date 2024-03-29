@@ -8,7 +8,27 @@ module BakingRack
 
       desc "aws_s3_terraform", "Defines Terraform Resources for deploying to AWS S3 served by CloudFront"
       def aws_s3_terraform
-        install_templates "aws_s3_terraform", "terraform"
+        install_templates "aws_s3_terraform", "terraform", except: %w[cloudfront.tf variables.tf]
+
+        explain_template "aws_s3_terraform", "cloudfront.tf", <<~TEXT
+
+          Add and customize the following origin to your cloudfront distribution:
+
+        TEXT
+
+        explain_template "aws_s3_terraform", "variables.tf", <<~TEXT
+
+          Add and customize the following variables to your terraform install:
+
+        TEXT
+      end
+
+      def explain_template(generator, filename, explanation)
+        directory = init_install_template_root(generator)
+        path = File.join(directory, filename)
+
+        say explanation, :green
+        say File.read(path)
       end
 
       desc "aws_github_publish", "Creates a GitHub Action workflow to continously publish"
@@ -37,13 +57,15 @@ module BakingRack
 
     private
 
-      def install_templates(generator, destination = nil)
+      def install_templates(generator, destination, except: [])
         directory = init_install_template_root(generator)
 
         Dir.glob(File.join(directory, "**/*")).each do |path|
           next if File.directory?(path)
 
           filename = path[directory.length + 1..]
+          next if except.include?(filename)
+
           output = destination ? File.join(destination, filename) : filename
           template filename, output
         end
