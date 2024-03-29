@@ -8,15 +8,19 @@ module BakingRack
     class Deployer < BakingRack::Deployer
       include UsesTerraform
 
-      attr_reader :bucket_name
       attr_reader :acl
 
-      def initialize(client: nil, bucket_name: read_bucket_name_from_terraform, acl: "public-read", **kargs)
+      def initialize(client: nil, bucket_name: nil, acl: "public-read", **kargs)
         super(**kargs)
 
         @client = client
         @bucket_name = bucket_name
         @acl = acl
+      end
+
+      def bucket_name
+        # lazy-load the default bucket name operation until it's actually needed
+        @bucket_name ||= read_bucket_name_from_terraform
       end
 
       def upload_file(file)
