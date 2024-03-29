@@ -109,14 +109,19 @@ RSpec.describe BakingRack::AwsS3::Deployer do
       expect(described_class.new.bucket_name).to eql("my-bucket")
     end
 
+    it "doesn't raise an error when initializing the instance" do
+      FileUtils.rm_rf("./terraform")
+      expect{described_class.new}.not_to raise_error
+    end
+
     it "raises an error if bucket name wasn't given and terraform isn't set up" do
       FileUtils.rm_rf("./terraform")
-      expect{described_class.new}.to raise_error(ArgumentError, "bucket_name required")
+      expect{described_class.new.bucket_name}.to raise_error(ArgumentError, "bucket_name required")
     end
 
     it "raises an error if bucket name wasn't given and terraform doesn't output `baking_rack_bucket_name`" do
       stub_terraform_command "output -raw baking_rack_bucket_name", "No outputs found"
-      expect{described_class.new}.to raise_error(ArgumentError, "bucket_name required")
+      expect{described_class.new.bucket_name}.to raise_error(ArgumentError, "bucket_name required")
     end
   end
 
