@@ -3,6 +3,8 @@
 require "baking_rack"
 require "thor"
 
+require_relative "commands/logger"
+
 module BakingRack
   class CLI < Thor
     include Thor::Actions
@@ -37,7 +39,7 @@ module BakingRack
       run_clean
     end
 
-    desc "publish_via_github", "Generate a GitHub Action to publish automatically on commit to a branch."
+    desc "github_publisher", "Generate a GitHub Action to publish automatically on commit to a branch."
     method_option :bucket
     method_option :filename, default: "publish.yml"
     method_option :region, default: "us-east-1"
@@ -45,7 +47,7 @@ module BakingRack
     method_option :role_session_name, default: "GitHub_to_AWS_via_FederatedOIDC"
     method_option :role_to_assign, type: :string, desc: "We attempt to infer this from terraform"
     method_option :verbose, type: :boolean, default: false
-    def publish_via_github
+    def github_publisher
       context = AwsGithubPublish.new.tap do |a|
         a.bucket_name = options.bucket || default_bucket_name
         a.branch_name = options.branch
@@ -57,7 +59,7 @@ module BakingRack
                            raise(ArgumentError, "cannot infer role-to-assign, please provide its value")
       end
 
-      init_install_template_root "publish_via_github"
+      init_install_template_root "github_publisher"
       template "aws_publish.yml", File.join(".github/workflows/#{options.filename}"), context: context.binding
     end
 

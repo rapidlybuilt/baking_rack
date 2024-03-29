@@ -110,12 +110,12 @@ RSpec.describe BakingRack::AwsS3::Deployer do
     end
 
     it "doesn't raise an error when initializing the instance" do
-      FileUtils.rm_rf("./terraform")
+      FileUtils.rm_rf(terraform_directory)
       expect{described_class.new}.not_to raise_error
     end
 
     it "raises an error if bucket name wasn't given and terraform isn't set up" do
-      FileUtils.rm_rf("./terraform")
+      FileUtils.rm_rf(terraform_directory)
       expect{described_class.new.bucket_name}.to raise_error(ArgumentError, "bucket_name required")
     end
 

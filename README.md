@@ -138,7 +138,7 @@ module "baking_rack" {
 
 3. Define some terraform outputs
 
-These outputs are used by the `aws_github_publish` generator.
+These outputs are used by the `github_publisher` generator.
 
 ```
 output "baking_rack_iam_role_arn" {
@@ -162,7 +162,7 @@ terraform apply
 Use GitHub Actions to automatically publish the latest `main` to the S3 bucket.
 
 ```
-bundle exec baking_rack publish_via_github
+bundle exec baking_rack github_publisher
 ```
 
 ## Contributing

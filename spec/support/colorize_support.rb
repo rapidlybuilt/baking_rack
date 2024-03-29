@@ -1,4 +1,4 @@
-require "colorize"
+require "colorized_string"
 
 module ColorizeSupport
   def colorize(color, string)
