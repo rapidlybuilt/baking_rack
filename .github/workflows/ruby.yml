@@ -70,15 +70,3 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         owner: dcunning
-
-    - name: Extract Version
-      id: extract_version
-      run: |
-        VERSION=$(ruby -e "load './lib/baking_rack/version.rb'; puts BakingRack::VERSION")
-        echo "::set-output name=VERSION::$VERSION"
-
-    - name: Tag this release
-      run: |
-        TAG_NAME="v${{ steps.extract_version.outputs.VERSION }}"
-        git tag $TAG_NAME
-        git push origin $TAG_NAME
