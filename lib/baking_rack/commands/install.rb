@@ -12,6 +12,8 @@ module BakingRack
       end
 
       desc "aws_github_publish", "Creates a GitHub Action workflow to continously publish"
+      method_option :bucket
+      method_option :filename, default: "publish.yml"
       method_option :region, default: "us-east-1"
       method_option :branch, default: "main"
       method_option :role_session_name, default: "GitHub_to_AWS_via_FederatedOIDC"
@@ -19,6 +21,7 @@ module BakingRack
       method_option :verbose, type: :boolean, default: false
       def aws_github_publish
         context = AwsGithubPublish.new.tap do |a|
+          a.bucket_name = options.bucket || default_bucket_name
           a.branch_name = options.branch
           a.aws_region = options.region
           a.verbose = options.verbose
@@ -28,10 +31,8 @@ module BakingRack
                              raise(ArgumentError, "cannot infer role-to-assign, please provide its value")
         end
 
-        # context = context.send(:binding)
-
         init_install_template_root "github_publish_workflow"
-        template "aws_publish.yml", ".github/workflows/publish.yml", context: context.binding
+        template "aws_publish.yml", File.join(".github/workflows/#{options.filename}"), context: context.binding
       end
 
     private
@@ -54,7 +55,13 @@ module BakingRack
         path
       end
 
+      def default_bucket_name
+        read_terraform_output_value("baking_rack_bucket_name") ||
+          raise(ArgumentError, "bucket required")
+      end
+
       class AwsGithubPublish
+        attr_accessor :bucket_name
         attr_accessor :branch_name
         attr_accessor :aws_region
         attr_accessor :role_to_assume

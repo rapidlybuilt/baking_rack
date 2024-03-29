@@ -18,9 +18,11 @@ module BakingRack
         @acl = acl
       end
 
+      # ENV["BUCKET_NAME"] when deploying from a CI/CD process.
+      # terraform output value when manually.
       def bucket_name
         # lazy-load the default bucket name operation until it's actually needed
-        @bucket_name ||= read_bucket_name_from_terraform
+        @bucket_name ||= ENV.fetch("BUCKET_NAME", read_bucket_name_from_terraform)
       end
 
       def upload_file(file)

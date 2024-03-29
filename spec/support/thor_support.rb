@@ -22,4 +22,14 @@ module ThorSupport
 
     result
   end
+
+  def thor_options(command_name, options = {})
+    command_options = subject.class.commands[command_name].options
+
+    hash = command_options.each_with_object({}) do |(key, opt), h|
+      h[key.to_s] =  options[key] || options[key.to_s] || opt.default
+    end
+
+    OpenStruct.new(hash)
+  end
 end

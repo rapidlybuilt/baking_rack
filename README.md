@@ -129,7 +129,7 @@ Your Access Key and Secret Access Keys are read from your AWS config or ENV.
 
 ```ruby
 BakingRack::AwsS3::Deployer.new(
-  bucket_name: "your-bucket.com", # bucket containing your static files
+  bucket_name: ENV.fetch("BUCKET_NAME", "your-bucket.com"), # bucket containing your static files
 )
 ```
 
@@ -146,7 +146,7 @@ $ terraform apply
 $ cd ..
 
 # Generate a GitHub workflow to publish the latest `main` to the S3 bucket
-$ bundle exec baking_rack install:github_publish_workflow
+$ bundle exec baking_rack install aws_github_publish
 ```
 
 ## Contributing

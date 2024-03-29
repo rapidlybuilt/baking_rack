@@ -38,5 +38,6 @@ jobs:
         env:
           RAILS_ENV: production
           RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
+          BUCKET_NAME: <%= bucket_name %>
         run: |
           bundle exec baking_rack publish<%= " --verbose" if verbose %>
