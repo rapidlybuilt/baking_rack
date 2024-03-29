@@ -12,7 +12,7 @@ resource "aws_cloudfront_distribution" "main" {
 
     custom_header {
       name  = "User-Agent"
-      value = local.secret_handshake
+      value = local.handshake
     }
   }
 }

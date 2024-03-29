@@ -23,7 +23,7 @@ locals {
   application_tag = "baking_rack"
 
   # Keep S3 from responding to direct requests (force requests through CloudFront instead)
-  handshake = base64sha512("REFER-SECRET-19265125-${var.bucket_name}-52865926")
+  handshake = base64sha512("REFER-HANDSHAKE-${var.bucket_name}-52865926")
 
   tags = merge(
     var.tags,

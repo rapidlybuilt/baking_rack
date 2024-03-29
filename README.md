@@ -34,22 +34,23 @@ Start by including `baking_rack` in your Gemfile:
 
 ```ruby
 gem 'baking_rack'
+
+# (if using the AWS S3 deployer)
+gem 'aws-sdk-s3'
 ```
 
 Then run `bundle install`.
 
-## Usage
-
-Ruby API:
+## Configuration
 
 ```ruby
-directory = "site"
+# config/initializers/baking_rack.rb (in Rails)
 
-# Step 1: build the webpages
-BakingRack::Build.run(app: Rails.application) do |b|
-  b.domain_name = "my-domain.com"
+BakingRack.config do |c|
+  c.builder = BakingRack::Builder.new
+  c.deployer = BakingRack::Deployers::AwsS3.new
 
-  b.define_static_routes do
+  c.define_static_routes do
     # Render this explicit path using your Rack app.
     get "/about.html"
 
@@ -60,26 +61,6 @@ BakingRack::Build.run(app: Rails.application) do |b|
 
     # Expect statuses other than 200
     get "/404.html", status: 404
-  end
-end
-
-# Step 2: deploy what was built
-BakingRack::AwsS3::Deployer.run(
-  bucket_name: "my-bucket.com",
-)
-```
-
-CLI:
-
-```ruby
-# config/initializers/baking_rack.rb (in Rails)
-
-BakingRack.config do |c|
-  c.builder = BakingRack::Builder.new
-  c.deployer = BakingRack::Deployers::AwsS3.new
-
-  c.define_static_routes do
-    # same usage as BakingRack::Build.run above
   end
 end
 ```
@@ -104,7 +85,9 @@ Deployers support the `dry_run` keyword argument which instructs it to output wh
 `BakingRack` provides some additional help for building static webpages from Ruby on Rails applications, just use its custom builder class:
 
 ```ruby
-BakingRack::Rails::Build.run(build_directory: directory) do |b|
+BakingRack.config do |c|
+  c.builder = BakingRack::Rails::Build.new
+
   b.static_routes do
     # path helpers are exposed here
     get root_path
@@ -112,41 +95,77 @@ BakingRack::Rails::Build.run(build_directory: directory) do |b|
 end
 ```
 
-Intelligent defaults
+Intelligent defaults:
 
 * `app` defaults to `Rails.application`
 * `domain_name` defaults to `Rails.application.config.hosts.first`
 
-### AWS S3
+### AWS + Terraform
 
-Add another gem to your Gemfile:
+1. Define the terraform module
 
-```ruby
-gem "aws-sdk-s3", require: false
+```terraform
+module "baking_rack" {
+  source = "git@github.com:dcunning/baking_rack.git//terraform?ref=main"
+
+  bucket_name       = "${module.labels.id}-www"
+  domain_name       = var.domain_name
+  github_repository = var.github_repository
+  branch_name       = var.github_branch_name
+}
+
+# These outputs are used by baking_rack's aws_github_publish command
+
 ```
 
-Your Access Key and Secret Access Keys are read from your AWS config or ENV.
+2. Add an origin to your CloudFront distribution
 
-```ruby
-BakingRack::AwsS3::Deployer.new(
-  bucket_name: ENV.fetch("BUCKET_NAME", "your-bucket.com"), # bucket containing your static files
-)
+```terraform
+  origin {
+    domain_name = module.baking_rack_bucket.website_endpoint
+    origin_id   = "S3-${module.baking_rack.bucket_name}"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1", "TLSv1.1", "TLSv1.2"]
+    }
+
+    custom_header {
+      name  = "User-Agent"
+      value = module.baking_rack.handshake
+    }
+  }
 ```
 
-If you want terraform to set up your AWS resources required for hosting on S3 and serving via CloudFront, run the following commands:
+3. Define some terraform outputs
+
+These outputs are used by the `aws_github_publish` generator.
+
+```
+output "baking_rack_iam_role_arn" {
+  value = module.baking_rack.iam_role_arn
+}
+
+output "baking_rack_bucket_name" {
+  value = module.baking_rack.bucket_name
+}
+```
+
+4. Apply the terraform plan
 
 ```bash
-# Generate the terraform files
-$ bundle exec baking_rack install:aws_s3_terraform
+terraform init
+terraform apply
+```
 
-# https://developer.hashicorp.com/terraform/tutorials/aws-get-started
-$ cd terraform
-$ terraform init
-$ terraform apply
-$ cd ..
+5. Generate a GitHub workflow
 
-# Generate a GitHub workflow to publish the latest `main` to the S3 bucket
-$ bundle exec baking_rack install aws_github_publish
+Use GitHub Actions to automatically publish the latest `main` to the S3 bucket.
+
+```
+bundle exec baking_rack publish_from_github
 ```
 
 ## Contributing
