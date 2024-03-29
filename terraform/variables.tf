@@ -12,6 +12,7 @@ variable "github_repository" {
 
 variable "branch_name" {
   description = "The branch name inside the GitHub repository."
+  default     = "main"
 }
 
 variable "tags" {
