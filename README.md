@@ -108,14 +108,11 @@ Intelligent defaults:
 module "baking_rack" {
   source = "git@github.com:dcunning/baking_rack.git//terraform?ref=main"
 
-  bucket_name       = "${module.labels.id}-www"
+  bucket_name       = "${module.label.id}-www"
   domain_name       = var.domain_name
   github_repository = var.github_repository
   branch_name       = var.github_branch_name
 }
-
-# These outputs are used by baking_rack's aws_github_publish command
-
 ```
 
 2. Add an origin to your CloudFront distribution
@@ -165,7 +162,7 @@ terraform apply
 Use GitHub Actions to automatically publish the latest `main` to the S3 bucket.
 
 ```
-bundle exec baking_rack publish_from_github
+bundle exec baking_rack publish_via_github
 ```
 
 ## Contributing
