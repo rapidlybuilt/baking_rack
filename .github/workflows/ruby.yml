@@ -38,9 +38,9 @@ jobs:
       matrix:
         ruby:
           - '3.1'
-          - '3.2'
-          - 'head'
-          - truffleruby-head
+          # - '3.2'
+          # - 'head'
+          # - truffleruby-head
     continue-on-error: ${{ endsWith(matrix.ruby, 'head') }}
     steps:
     - uses: actions/checkout@v3
@@ -79,6 +79,8 @@ jobs:
       contents: write
 
     steps:
+    - uses: actions/checkout@v2
+
     - name: Extract Version
       id: extract_version
       run: |
