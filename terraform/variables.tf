@@ -27,9 +27,10 @@ locals {
   handshake = base64sha512("REFER-HANDSHAKE-${var.bucket_name}-52865926")
 
   tags = merge(
-    var.tags,
     {
-      Application = local.application_tag
-    }
+      Application = local.application_tag,
+      ApplicationId = var.bucket_name
+    },
+    var.tags
   )
 }
