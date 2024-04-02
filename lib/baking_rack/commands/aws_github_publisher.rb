@@ -48,6 +48,14 @@ module BakingRack
         @git_root ||= find_git_root(Dir.pwd)
       end
 
+      def filepath
+        git_root.join(".github/workflows", filename)
+      end
+
+      def filepath_from_git_root
+        filepath.relative_path_from(git_root)
+      end
+
     private
 
       def default_bucket_name

@@ -22,7 +22,7 @@ module BakingRack
       # terraform output value when manually.
       def bucket_name
         # lazy-load the default bucket name operation until it's actually needed
-        @bucket_name ||= ENV.fetch("BUCKET_NAME", read_bucket_name_from_terraform)
+        @bucket_name ||= ENV["BUCKET_NAME"] || read_bucket_name_from_terraform
       end
 
       def upload_file(file)

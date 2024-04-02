@@ -3,7 +3,9 @@ name: <%= name %>
 on:
   push:
     branches: [ <%= branch_name %> ]
-<%- if directory -%>    paths: [ <%= directory %>/** ]
+<%- if directory -%>    paths:
+      - <%= directory %>/**
+      - <%= filepath_from_git_root %>
 <%- end -%>
 
 env:
@@ -31,6 +33,8 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
+<%- if directory -%>          working-directory: <%= directory %>
+<%- end -%>
         env:
           BUNDLE_RUBYGEMS__PKG__GITHUB__COM: ${{ secrets.BUNDLE_RUBYGEMS__PKG__GITHUB__COM }}
 

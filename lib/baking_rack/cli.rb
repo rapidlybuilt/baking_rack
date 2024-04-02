@@ -65,7 +65,7 @@ module BakingRack
       )
 
       init_install_template_root "github_publisher"
-      template "aws_publish.yml", context.git_root.join(".github/workflows", context.filename), context: context.binding
+      template "aws_publish.yml", context.filepath, context: context.binding
     end
 
   private
