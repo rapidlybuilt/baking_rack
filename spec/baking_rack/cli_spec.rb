@@ -82,25 +82,25 @@ RSpec.describe BakingRack::CLI do
     after { FileUtils.rm_rf(".github/workflows/publish.yml") }
 
     it "writes the file" do
-      subject.options = thor_options(role_to_assign: "test-role", bucket: "test")
+      subject.options = thor_options(role_to_assume: "test-role", bucket: "test")
       expect(output).to include("create  .github/workflows/publish.yml")
       expect(content).to include(%(role-to-assume: "test-role"))
     end
 
     it "infers the bucket using terraform" do
       stub_terraform_command "output -raw baking_rack_bucket_name", "my-bucket"
-      subject.options = thor_options(role_to_assign: "test-role")
+      subject.options = thor_options(role_to_assume: "test-role")
       expect(output).to include("create  .github/workflows/publish.yml")
       expect(content).to include("BUCKET_NAME: my-bucket")
     end
 
-    it "errors when the role-to-assign can't be determined" do
+    it "errors when the role-to-assume can't be determined" do
       subject.options = thor_options(bucket: "test")
-      expect{output}.to raise_error("cannot infer role-to-assign, please provide its value")
+      expect{output}.to raise_error("cannot infer role-to-assume, please provide its value")
     end
 
     it "errors when bucket is missing and terraform can't supply it" do
-      subject.options = thor_options(role_to_assign: "test-role")
+      subject.options = thor_options(role_to_assume: "test-role")
       expect{output}.to raise_error(ArgumentError, "bucket required")
     end
 
