@@ -1,8 +1,10 @@
-name: Publish this Rails app as a static site
+name: <%= name %>
 
 on:
   push:
     branches: [ <%= branch_name %> ]
+<%- if directory -%>    paths: [ <%= directory %>/** ]
+<%- end -%>
 
 env:
   AWS_REGION : "<%= aws_region %>"
@@ -10,6 +12,12 @@ env:
 jobs:
   Publish:
     runs-on: ubuntu-latest
+
+<%- if directory -%>
+    defaults:
+      run:
+        working-directory: www
+<%- end -%>
 
     permissions:
       id-token: write
