@@ -239,8 +239,8 @@ module BakingRack
         headers = response[1].to_h.transform_keys(&:downcase)
 
         # Gather the Rack body array into a single string
-        strings = response[2].map(&:to_s)
-        body = strings.reduce { |a, b| a << b }
+        body = String.new
+        response[2].each { |s| body << s }
 
         [response[0], headers, body]
       end
