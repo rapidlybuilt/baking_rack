@@ -7,6 +7,7 @@ unless RUBY_ENGINE == "truffleruby"
   end
 end
 
+require "ostruct"
 require "baking_rack"
 require "debug" unless ENV.key?("GITHUB_ACTION")
 
