@@ -16,7 +16,6 @@ module BakingRack
   class Error < StandardError; end
   class UnexpectedStatusCode < Error; end
   class DirectoryMissingError < Error; end
-  class TerraformOutputNotFoundError < Error; end
 
   class << self
     def config

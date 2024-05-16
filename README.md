@@ -35,7 +35,7 @@ Start by including `baking_rack` in your Gemfile:
 ```ruby
 gem 'baking_rack'
 
-# (if using the AWS S3 deployer)
+# when deploying to S3
 gem 'aws-sdk-s3'
 ```
 
@@ -44,11 +44,9 @@ Then run `bundle install`.
 ## Configuration
 
 ```ruby
-# config/initializers/baking_rack.rb (in Rails)
-
 BakingRack.config do |c|
-  c.builder = BakingRack::Builder.new
-  c.deployer = BakingRack::Deployers::AwsS3.new
+  c.builder = BakingRack::Builder.new(app: YourRackApp)
+  c.deployer = BakingRack::AwsS3::Deployer.new
 
   c.define_static_routes do
     # Render this explicit path using your Rack app.
@@ -85,6 +83,8 @@ Deployers support the `dry_run` keyword argument which instructs it to output wh
 `BakingRack` provides some additional help for building static webpages from Ruby on Rails applications, just use its custom builder class:
 
 ```ruby
+# config/initializers/baking_rack.rb
+
 BakingRack.config do |c|
   c.builder = BakingRack::Rails::Build.new
 
@@ -102,16 +102,26 @@ Intelligent defaults:
 
 ### AWS + Terraform
 
-1. Define the terraform module
+1. Define the terraform module and some outputs
 
 ```terraform
 module "baking_rack" {
-  source = "git@github.com:dcunning/baking_rack.git//terraform?ref=main"
+  source = "git@github.com:dcunning/baking_rack.git//terraform/aws?ref=v<%= BakingRack::VERSION %>"
 
   bucket_name       = "${module.label.id}-www"
   domain_name       = var.domain_name
   github_repository = var.github_repository
   branch_name       = var.github_branch_name
+}
+
+# These outputs are used by the `github_publisher` generator.
+
+output "baking_rack_iam_role_arn" {
+  value = module.baking_rack.iam_role_arn
+}
+
+output "baking_rack_bucket_name" {
+  value = module.baking_rack.bucket_name
 }
 ```
 
@@ -129,6 +139,7 @@ module "baking_rack" {
       origin_ssl_protocols   = ["TLSv1", "TLSv1.1", "TLSv1.2"]
     }
 
+    # Prevents S3 objects from being accessed outside CloudFront
     custom_header {
       name  = "User-Agent"
       value = module.baking_rack.handshake
@@ -136,28 +147,14 @@ module "baking_rack" {
   }
 ```
 
-3. Define some terraform outputs
-
-These outputs are used by the `github_publisher` generator.
-
-```
-output "baking_rack_iam_role_arn" {
-  value = module.baking_rack.iam_role_arn
-}
-
-output "baking_rack_bucket_name" {
-  value = module.baking_rack.bucket_name
-}
-```
-
-4. Apply the terraform plan
+3. Apply the terraform plan
 
 ```bash
 terraform init
 terraform apply
 ```
 
-5. Generate a GitHub workflow
+4. Generate a GitHub workflow
 
 Use GitHub Actions to automatically publish the latest `main` to the S3 bucket.
 

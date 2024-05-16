@@ -31,11 +31,8 @@ module BakingRack
         super
       end
 
-      # TODO: helper to add ALL Rails routes as 200 or 301
       def static_routes_context
-        context = super
-        context.singleton_class.include(app.routes.url_helpers)
-        context
+        StaticRoutesContext.new(app, index_filename, @static_routes)
       end
 
       def default_domain_name
@@ -50,6 +47,53 @@ module BakingRack
         return if ::Rails.env.production?
 
         raise InvalidRailsEnvironmentError, ::Rails.env.to_s
+      end
+
+      class StaticRoutesContext < BakingRack::Builder::StaticRoutesContext
+        def initialize(app, *args, **kargs)
+          super(*args, **kargs)
+          @app = app
+
+          singleton_class.include(@app.routes.url_helpers)
+        end
+
+        def get_other_rails_routes(except: [])
+          @app.routes.routes.each do |route|
+            next if ignored_route?(route, except:)
+
+            path = route.path.spec.to_s.sub("(.:format)", ".html")
+            get(path) unless already_added?(path)
+          end
+        end
+
+        def ignored_route?(route, except: [])
+          name = route.name.to_s
+          path = route.path.spec.to_s
+
+          # explicitly skipped
+          return true if except.include?(name) || except.include?(path)
+
+          # static sites only support GET requests
+          return true unless route.verb == "GET"
+
+          # Rails adds a bunch of routes
+          return true if rails_default_route?(name, path)
+
+          # this method doesn't support path variables
+          return true unless route.parts == [] || route.parts == [:format]
+
+          false
+        end
+
+        def rails_default_route?(name, path)
+          name.start_with?("rails_") ||
+            name.start_with?("turbo_") ||
+            path == "/cable"
+        end
+
+        def already_added?(path)
+          @routes.any? { |r| r.path == path }
+        end
       end
     end
   end

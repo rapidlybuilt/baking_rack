@@ -4,7 +4,7 @@ require "spec_helper"
 
 RSpec.describe BakingRack::Rails::Builder do
   let(:html_content) { "<p>Hi!</p>" }
-  let(:app) { RailsApp }
+  let(:app) { RailsApp.new }
   let(:builder) { described_class.new(app:, build_directory:) }
   let(:rails_const) { double("Rails", env: rails_env) }
   let(:rails_env) { double("env", production?: true) }
@@ -53,25 +53,45 @@ RSpec.describe BakingRack::Rails::Builder do
     expect{builder.run}.to raise_error(BakingRack::Rails::Builder::InvalidRailsEnvironmentError)
   end
 
-  class RailsApp
-    module UrlHelpers
-      def root_path
-        "/"
+  describe "#get_other_rails_routes" do
+    let(:builder) do
+      described_class.new(app:) do |b|
+        b.define_static_routes do
+          get_other_rails_routes
+        end
       end
     end
 
-    class << self
-      def call(env)
-        ["200", {"Content-Type" => "text/html"}, ["<p>Hi!</p>"]]
-      end
+    it "adds the other routes to get" do
+      get "/", as: :root
 
-      def routes
-        OpenStruct.new(url_helpers: UrlHelpers)
-      end
+      expect(builder.static_routes.map(&:path)).to eql(["/"])
+    end
 
-      def config
-        OpenStruct.new(hosts: ["example.com"])
-      end
+  private
+
+    def get(path, as: nil, verb: "GET", parts: [:format])
+      app.routes.routes << OpenStruct.new(name: as, path: OpenStruct.new(spec: path), verb:, parts:)
+    end
+  end
+
+  module UrlHelpers
+    def root_path
+      "/"
+    end
+  end
+
+  class RailsApp
+    def call(env)
+      ["200", {"Content-Type" => "text/html"}, ["<p>Hi!</p>"]]
+    end
+
+    def routes
+      @routes ||= OpenStruct.new(url_helpers: UrlHelpers, routes: [])
+    end
+
+    def config
+      @config ||= OpenStruct.new(hosts: ["example.com"])
     end
   end
 end

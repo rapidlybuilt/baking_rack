@@ -21,8 +21,10 @@ module BakingRack
       # ENV["BUCKET_NAME"] when deploying from a CI/CD process.
       # terraform output value when manually.
       def bucket_name
-        # lazy-load the default bucket name operation until it's actually needed
-        @bucket_name ||= ENV["BUCKET_NAME"] || read_bucket_name_from_terraform
+        # load the default bucket name only if it's actually needed
+        @bucket_name ||= ENV["BUCKET_NAME"] ||
+                         read_bucket_name_from_terraform ||
+                         raise(ArgumentError, "bucket_name required")
       end
 
       def upload_file(file)
@@ -78,7 +80,7 @@ module BakingRack
       end
 
       def read_bucket_name_from_terraform
-        read_terraform_output_value("baking_rack_bucket_name") || raise(ArgumentError, "bucket_name required")
+        read_terraform_output_value("baking_rack_bucket_name")
       end
     end
   end

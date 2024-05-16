@@ -18,10 +18,6 @@ module BakingRack
       stdout
     end
 
-    def required_terraform_output_value(name)
-      read_terraform_output_value(name) || raise(TerraformOutputNotFoundError, name)
-    end
-
     def capture_terraform_command(name)
       Dir.chdir(terraform_directory) do
         require "open3"

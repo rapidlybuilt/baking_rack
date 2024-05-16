@@ -55,7 +55,7 @@ module BakingRack
 
         name: options.name,
         directory: options.directory,
-        branch_name: options.branch_name,
+        branch_name: options.branch,
         bucket_name: options.bucket,
         aws_region: options.region,
         verbose: options.verbose,
