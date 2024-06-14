@@ -61,12 +61,12 @@ module BakingRack
           turbo_recede_historical_location
           turbo_resume_historical_location
           turbo_refresh_historical_location
-        ]
+        ].freeze
 
         IGNORED_ROUTE_PATHS = %w[
           /assets
           /cable
-        ]
+        ].freeze
 
         def initialize(app, *args, **kargs)
           super(*args, **kargs)
@@ -95,12 +95,16 @@ module BakingRack
           return true unless route.verb == "GET"
 
           # Rails adds a bunch of routes
-          return true if IGNORED_ROUTE_NAMES.include?(name) || IGNORED_ROUTE_PATHS.include?(path)
+          return true if rails_default_route?(name, path)
 
           # this method doesn't support path variables
           return true unless route.parts == [] || route.parts == [:format]
 
           false
+        end
+
+        def rails_default_route?(name, path)
+          IGNORED_ROUTE_NAMES.include?(name) || IGNORED_ROUTE_PATHS.include?(path)
         end
 
         def already_added?(path)
