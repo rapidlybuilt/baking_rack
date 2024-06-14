@@ -8,7 +8,7 @@ module BakingRack
       def initialize(app: ::Rails.application,
                      build_directory: BakingRack.config.build_directory,
                      domain_name: nil, &block)
-        super(app:, build_directory:, domain_name:, &block)
+        super
 
         self.public_directory = "public"
       end
