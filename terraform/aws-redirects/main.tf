@@ -13,7 +13,7 @@ resource "aws_cloudfront_distribution" "main" {
   enabled         = true
   is_ipv6_enabled = true
 
-  aliases = [var.from_domain_name]
+  aliases = concat([var.from_domain_name], var.subject_alternative_names)
   comment = "Redirects to ${var.to_domain_name}"
 
   default_cache_behavior {
@@ -82,6 +82,20 @@ module "ssl_certificate" {
 resource "aws_route53_record" "main-a" {
   zone_id = var.zone_id
   name    = var.from_domain_name
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.main.domain_name
+    zone_id                = aws_cloudfront_distribution.main.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+resource "aws_route53_record" "sans-a" {
+  for_each = toset(var.subject_alternative_names)
+
+  zone_id = var.zone_id
+  name    = each.value
   type    = "A"
 
   alias {
