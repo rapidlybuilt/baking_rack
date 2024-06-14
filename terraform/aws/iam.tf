@@ -38,7 +38,7 @@ data "aws_iam_policy_document" "s3_bucket_uploader_assumed_role" {
 
     principals {
       type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github_openid_provider.arn]
+      identifiers = var.skip_github_openid_provider ? ["arn:aws:iam::${local.aws_account_id}:oidc-provider/token.actions.githubusercontent.com"] : [aws_iam_openid_connect_provider.github_openid_provider[0].arn]
     }
 
     condition {
