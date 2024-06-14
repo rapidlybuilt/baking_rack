@@ -14,6 +14,6 @@ output "website_endpoint" {
 }
 
 output "handshake" {
-  value = local.handshake
+  value       = local.handshake
   description = "Allows only CloudFront to make requests to the bucket"
 }

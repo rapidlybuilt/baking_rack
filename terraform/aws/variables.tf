@@ -20,6 +20,12 @@ variable "tags" {
   default     = {}
 }
 
+variable "skip_github_openid_provider" {
+  description = "Whether to create the GitHub OpenID Provider necessary for uploading files to S3 from GitHub Actions"
+  type        = bool
+  default     = false
+}
+
 locals {
   application_tag = "baking_rack"
 
@@ -28,7 +34,7 @@ locals {
 
   tags = merge(
     {
-      Application = local.application_tag,
+      Application   = local.application_tag,
       ApplicationId = var.bucket_name
     },
     var.tags

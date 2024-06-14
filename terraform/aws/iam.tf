@@ -2,6 +2,8 @@
 # https://aws.amazon.com/blogs/security/use-iam-roles-to-connect-github-actions-to-actions-in-aws/
 
 resource "aws_iam_openid_connect_provider" "github_openid_provider" {
+  count = var.skip_github_openid_provider ? 0 : 1
+
   url = "https://token.actions.githubusercontent.com"
 
   client_id_list = [
@@ -15,13 +17,13 @@ resource "aws_iam_openid_connect_provider" "github_openid_provider" {
 resource "aws_iam_role" "s3_bucket_uploader" {
   name               = "${var.bucket_name}-uploader"
   assume_role_policy = data.aws_iam_policy_document.s3_bucket_uploader_assumed_role.json
-  tags = local.tags
+  tags               = local.tags
 }
 
 resource "aws_iam_policy" "s3_bucket_uploader_policy" {
   name   = "${var.bucket_name}-uploader"
   policy = data.aws_iam_policy_document.s3_bucket_uploader_policy.json
-  tags = local.tags
+  tags   = local.tags
 }
 
 resource "aws_iam_role_policy_attachment" "s3_bucket_uploader_policy_attachment" {
@@ -92,7 +94,7 @@ data "aws_iam_policy_document" "bucket_policy" {
     condition {
       test     = "StringEquals"
       variable = "aws:UserAgent"
-      values = [local.handshake]
+      values   = [local.handshake]
     }
 
     principals {
