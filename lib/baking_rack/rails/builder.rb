@@ -21,7 +21,10 @@ module BakingRack
 
       def run_build
         ensure_production_environment
+
+        # IMPORTANT: sprockets needs this to happen off the current thread
         bundle_exec "rake assets:precompile"
+
         remove_file "public/assets/.manifest.json"
         super
       end
@@ -50,6 +53,21 @@ module BakingRack
       end
 
       class StaticRoutesContext < BakingRack::Builder::StaticRoutesContext
+        IGNORED_ROUTE_NAMES = %w[
+          rails_info_properties
+          rails_info_routes
+          rails_info
+          rails_health_check
+          turbo_recede_historical_location
+          turbo_resume_historical_location
+          turbo_refresh_historical_location
+        ]
+
+        IGNORED_ROUTE_PATHS = %w[
+          /assets
+          /cable
+        ]
+
         def initialize(app, *args, **kargs)
           super(*args, **kargs)
           @app = app
@@ -77,18 +95,12 @@ module BakingRack
           return true unless route.verb == "GET"
 
           # Rails adds a bunch of routes
-          return true if rails_default_route?(name, path)
+          return true if IGNORED_ROUTE_NAMES.include?(name) || IGNORED_ROUTE_PATHS.include?(path)
 
           # this method doesn't support path variables
           return true unless route.parts == [] || route.parts == [:format]
 
           false
-        end
-
-        def rails_default_route?(name, path)
-          name.start_with?("rails_") ||
-            name.start_with?("turbo_") ||
-            path == "/cable"
         end
 
         def already_added?(path)

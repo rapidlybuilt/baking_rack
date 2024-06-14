@@ -52,4 +52,6 @@ jobs:
           RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
           BUCKET_NAME: <%= bucket_name %>
         run: |
+<%- if directory -%>          bundle exec rake assets:precompile
+<%- end -%>
           bundle exec baking_rack publish<%= " --verbose" if verbose %>
