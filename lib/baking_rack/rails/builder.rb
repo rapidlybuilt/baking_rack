@@ -14,7 +14,7 @@ module BakingRack
       end
 
       def domain_name
-        super || default_domain_name
+        super || default_domain_name || raise(ArgumentError, "domain_name required")
       end
 
     private
@@ -61,8 +61,8 @@ module BakingRack
           @app.routes.routes.each do |route|
             next if ignored_route?(route, except:)
 
-            path = route.path.spec.to_s.sub("(.:format)", ".html")
-            get(path) unless already_added?(path)
+            path = render_route_spec(route.path.spec)
+            get(path, status: infer_route_status(route)) unless already_added?(path)
           end
         end
 
@@ -93,6 +93,29 @@ module BakingRack
 
         def already_added?(path)
           @routes.any? { |r| r.path == path }
+        end
+
+        def render_route_spec(spec)
+          path = spec.to_s
+
+          format = "(.:format)"
+          if path.end_with?(format)
+            path = path.sub(format, "")
+
+            ext = File.extname(path)
+            path += ".html" if ext == ""
+          end
+
+          path
+        end
+
+        def infer_route_status(route)
+          # HACK: how else to backward engineer this?
+          if route.app.respond_to?(:app) && route.app.app.is_a?(ActionDispatch::Routing::PathRedirect)
+            route.app.app.status
+          else
+            200
+          end
         end
       end
     end

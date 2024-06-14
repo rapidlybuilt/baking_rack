@@ -213,7 +213,7 @@ module BakingRack
       def generate_request(uri)
         {
           # https://github.com/rack/rack/blob/d3225f7c201320ed272a2fa7b000c5850e4a5f88/lib/rack/mock.rb#L43-L50
-          Rack::RACK_VERSION => Rack::VERSION,
+          Rack::RACK_VERSION => Rack.release,
           Rack::RACK_INPUT => StringIO.new,
           Rack::RACK_ERRORS => StringIO.new,
           # Rack::RACK_MULTITHREAD  => true,
