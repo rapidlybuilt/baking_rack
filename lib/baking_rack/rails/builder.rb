@@ -5,6 +5,8 @@ module BakingRack
     class Builder < BakingRack::Builder
       class InvalidRailsEnvironmentError < Error; end
 
+      BUILDABLE_ENVIRONMENTS = %w[production staging].freeze
+
       def initialize(app: ::Rails.application,
                      build_directory: BakingRack.config.build_directory,
                      domain_name: nil, &block)
@@ -20,7 +22,7 @@ module BakingRack
     private
 
       def run_build
-        ensure_production_environment
+        check_environment
 
         # IMPORTANT: sprockets needs this to happen off the current thread
         bundle_exec "rake assets:precompile"
@@ -46,8 +48,8 @@ module BakingRack
         system({ "RAILS_ENV" => "production" }, "bundle exec #{command}")
       end
 
-      def ensure_production_environment
-        return if ::Rails.env.production?
+      def check_environment
+        return if BUILDABLE_ENVIRONMENTS.include?(::Rails.env.to_s)
 
         raise InvalidRailsEnvironmentError, ::Rails.env.to_s
       end

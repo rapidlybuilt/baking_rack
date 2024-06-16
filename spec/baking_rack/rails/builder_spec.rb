@@ -7,7 +7,7 @@ RSpec.describe BakingRack::Rails::Builder do
   let(:app) { RailsApp.new }
   let(:builder) { described_class.new(app:, build_directory:) }
   let(:rails_const) { double("Rails", env: rails_env) }
-  let(:rails_env) { double("env", production?: true) }
+  let(:rails_env) { double("env", production?: true, to_s: "production") }
 
   around :each do |ex|
     # https://github.com/rspec/rspec-core/issues/1598
@@ -49,7 +49,7 @@ RSpec.describe BakingRack::Rails::Builder do
   end
 
   it "raises an error when run outside of RAILS_ENV=production" do
-    expect(rails_env).to receive(:production?).and_return(false)
+    expect(rails_env).to receive(:to_s).and_return("development")
     expect{builder.run}.to raise_error(BakingRack::Rails::Builder::InvalidRailsEnvironmentError)
   end
 

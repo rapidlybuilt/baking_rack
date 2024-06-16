@@ -17,7 +17,7 @@ module TerraformSupport
     end
   end
 
-  def stub_terraform_command(command, stdout)
-    expect(Open3).to receive(:capture3).with("terraform #{command}").and_return([stdout, nil, nil])
+  def stub_terraform_command(command, stdout, stderr = nil, status = nil)
+    expect(Open3).to receive(:capture3).with("terraform #{command}").and_return([stdout, stderr, status])
   end
 end

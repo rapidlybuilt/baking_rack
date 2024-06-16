@@ -2,6 +2,8 @@
 
 module BakingRack
   module UsesTerraform
+    class Error < BakingRack::Error; end
+
     def terraform_directory
       BakingRack.config.terraform_directory
     end
@@ -13,7 +15,7 @@ module BakingRack
     def read_terraform_output_value(name)
       return unless terraform_setup?
 
-      stdout, = capture_terraform_command("output -raw #{name}")
+      stdout = capture_terraform_command("output -raw #{name}")
       stdout = nil if stdout.empty? || stdout.include?("No outputs found")
       stdout
     end
@@ -21,7 +23,16 @@ module BakingRack
     def capture_terraform_command(name)
       Dir.chdir(terraform_directory) do
         require "open3"
-        Open3.capture3("terraform #{name}")
+
+        command = "terraform #{name}"
+        stdout, stderr = Open3.capture3(command)
+
+        if stdout == "" && stderr != ""
+          warn stderr
+          raise Error, "command errored: #{command}"
+        end
+
+        stdout
       end
     end
   end
