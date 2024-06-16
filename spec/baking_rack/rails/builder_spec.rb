@@ -68,6 +68,14 @@ RSpec.describe BakingRack::Rails::Builder do
       expect(builder.static_routes.map(&:path)).to eql(["/"])
     end
 
+    [404, 403, 500].each do |status|
+      it "infers that /#{status}.html probably wants to have a #{status} status code" do
+        get "/#{status}.html", as: :not_found
+
+        expect(builder.static_routes.map(&:status)).to eql([status])
+      end
+    end
+
   private
 
     def get(path, as: nil, verb: "GET", parts: [:format])

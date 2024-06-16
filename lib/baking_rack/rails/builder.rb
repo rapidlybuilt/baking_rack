@@ -7,6 +7,8 @@ module BakingRack
 
       BUILDABLE_ENVIRONMENTS = %w[production staging].freeze
 
+      ERROR_CODES_WITH_PATHS = [404, 403, 500].freeze
+
       def initialize(app: ::Rails.application,
                      build_directory: BakingRack.config.build_directory,
                      domain_name: nil, &block)
@@ -82,7 +84,7 @@ module BakingRack
             next if ignored_route?(route, except:)
 
             path = render_route_spec(route.path.spec)
-            get(path, status: infer_route_status(route)) unless already_added?(path)
+            get(path, status: infer_route_status(route, path)) unless already_added?(path)
           end
         end
 
@@ -127,13 +129,14 @@ module BakingRack
           path
         end
 
-        def infer_route_status(route)
+        def infer_route_status(route, path)
           # HACK: how else to backward engineer this?
-          if route.app.respond_to?(:app) && route.app.app.is_a?(ActionDispatch::Routing::PathRedirect)
-            route.app.app.status
-          else
-            200
-          end
+          return route.app.app.status if route.app.respond_to?(:app) &&
+            route.app.app.is_a?(ActionDispatch::Routing::PathRedirect)
+
+          ERROR_CODES_WITH_PATHS.detect do |code|
+            path == "/#{code}.html"
+          end || 200
         end
       end
     end
