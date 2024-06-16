@@ -132,7 +132,7 @@ module BakingRack
         def infer_route_status(route, path)
           # HACK: how else to backward engineer this?
           return route.app.app.status if route.app.respond_to?(:app) &&
-            route.app.app.is_a?(ActionDispatch::Routing::PathRedirect)
+                                         route.app.app.is_a?(ActionDispatch::Routing::PathRedirect)
 
           ERROR_CODES_WITH_PATHS.detect do |code|
             path == "/#{code}.html"
