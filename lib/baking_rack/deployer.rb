@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "mime-types"
+require_relative "./mime_types"
 
 module BakingRack
   class Deployer
@@ -56,7 +56,7 @@ module BakingRack
       extension = File.extname(path)
       extension = extension[1..] if extension.start_with?(".")
 
-      Mime::Type.lookup_by_extension(extension)&.to_s
+      MIME::Types.type_for(extension).first&.content_type
     end
 
     def source_files

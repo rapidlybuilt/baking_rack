@@ -8,6 +8,7 @@ lib_directory = File.expand_path(__dir__)
 loader = Zeitwerk::Loader.new
 loader.push_dir(lib_directory)
 loader.ignore(File.join(lib_directory, "baking_rack/cli.rb"))
+loader.ignore(File.join(lib_directory, "baking_rack/mime_types.rb"))
 loader.ignore(File.join(lib_directory, "baking_rack/version.rb"))
 loader.ignore(File.join(lib_directory, "baking_rack/commands/*"))
 loader.setup # ready!
