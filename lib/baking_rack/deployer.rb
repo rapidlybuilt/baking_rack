@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "./mime_types"
+require_relative "mime_types"
 
 module BakingRack
   class Deployer
