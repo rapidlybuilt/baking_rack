@@ -56,7 +56,7 @@ module BakingRack
       extension = File.extname(path)
       extension = extension[1..] if extension.start_with?(".")
 
-      MIME::Types.type_for(extension).first&.content_type
+      Mime::Type.lookup_by_extension(extension)&.to_s
     end
 
     def source_files

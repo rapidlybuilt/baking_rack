@@ -58,6 +58,21 @@ RSpec.describe BakingRack::Builder do
       expect(read_build_file("index.html")).to eql(html_content)
     end
 
+    xit "allows two files with different capitalization" do
+      builder = described_class.new(app: basic_app, domain_name:) do |b|
+        b.define_static_routes do
+          get "/RSVP"
+          get "/rsvp"
+        end
+      end
+
+      builder.run
+
+      # this should fail but the OS just treats these files the same :(
+      expect(read_build_file("RSVP")).to eql(html_content)
+      expect(read_build_file("rsvp")).to eql(html_content)
+    end
+
     it "lazily runs #define_static_routes" do
       expect do
         described_class.new(app: basic_app, domain_name:) do |b|
