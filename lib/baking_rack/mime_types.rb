@@ -6,7 +6,7 @@ require "mime-types"
   # hotwire
   "text/vnd.turbo-stream.html" => ["turbo_stream"],
 }.each do |mime_type, extensions|
-  type = MIME::Type.new(mime_type) do |t|
+  type = MIME::Type.new("content-type" => mime_type) do |t|
     t.extensions = extensions
   end
 
