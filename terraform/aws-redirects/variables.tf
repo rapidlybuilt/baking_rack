@@ -17,7 +17,7 @@ variable "subject_alternative_names" {
 }
 
 variable "zone_id" {
-  description = "The zone id of the Route53 Hosted Zone which can be used instead of var.zone_name."
+  description = "The zone id of the Route53 Hosted Zone."
   type        = string
 }
 
