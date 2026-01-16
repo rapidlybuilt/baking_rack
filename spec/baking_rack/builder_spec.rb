@@ -58,6 +58,32 @@ RSpec.describe BakingRack::Builder do
       expect(read_build_file("index.html")).to eql(html_content)
     end
 
+    it "converts extensionless paths to directory-style index files" do
+      builder = described_class.new(app: basic_app, domain_name:) do |b|
+        b.define_static_routes do
+          get "/about"
+        end
+      end
+
+      builder.run
+
+      expect(read_build_file("about/index.html")).to eql(html_content)
+    end
+
+    it "preserves paths with file extensions as files" do
+      builder = described_class.new(app: basic_app, domain_name:) do |b|
+        b.define_static_routes do
+          get "/about.html"
+          get "/data.json"
+        end
+      end
+
+      builder.run
+
+      expect(read_build_file("about.html")).to eql(html_content)
+      expect(read_build_file("data.json")).to eql(html_content)
+    end
+
     xit "allows two files with different capitalization" do
       builder = described_class.new(app: basic_app, domain_name:) do |b|
         b.define_static_routes do

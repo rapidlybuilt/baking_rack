@@ -198,10 +198,18 @@ module BakingRack
         @routes = routes
       end
 
-      def get(path, status: 200, headers: {}, filepath: nil)
-        filepath ||= path.end_with?("/") ? File.join(path, @index_filename) : path
-
+      def get(path, status: 200, headers: {}, filepath: default_filepath(path))
         @routes << StaticRoute.new(path, status:, headers:, filepath:)
+      end
+
+    private
+
+      def default_filepath(path)
+        if path.end_with?("/") || File.extname(path).empty?
+          File.join(path, @index_filename)
+        else
+          path
+        end
       end
     end
 
