@@ -74,6 +74,12 @@ RSpec.describe BakingRack::Rails::Builder do
 
         expect(builder.static_routes.map(&:status)).to eql([status])
       end
+
+      it "infers that /#{status} probably wants to have a #{status} status code" do
+        get "/#{status}", as: :not_found
+
+        expect(builder.static_routes.map(&:status)).to eql([status])
+      end
     end
 
     it "recursively drills down into mounted engines" do
@@ -113,11 +119,21 @@ RSpec.describe BakingRack::Rails::Builder do
       expect(builder.static_routes.map(&:path)).to contain_exactly("/", "/pages/about")
     end
 
+    it "handles engines wrapped in ActionDispatch::Routing::Mapper::Constraints" do
+      engine = MockEngine.new
+      engine.get "/dashboard"
+      engine.get "/users"
+
+      mount_wrapped engine, at: "/admin"
+
+      expect(builder.static_routes.map(&:path)).to contain_exactly("/admin/dashboard", "/admin/users")
+    end
+
     describe "render_route_spec" do
-      it "strips (.:format) suffix and appends .html when path has no extension" do
+      it "strips (.:format) suffix without adding extension by default" do
         get "/about(.:format)", as: :about
 
-        expect(builder.static_routes.map(&:path)).to eql(["/about.html"])
+        expect(builder.static_routes.map(&:path)).to eql(["/about"])
       end
 
       it "strips (.:format) suffix but preserves existing extension" do
@@ -130,6 +146,28 @@ RSpec.describe BakingRack::Rails::Builder do
         get "/static", as: :static
 
         expect(builder.static_routes.map(&:path)).to eql(["/static"])
+      end
+
+      context "with default_format: 'html'" do
+        let(:builder) do
+          described_class.new(app:, default_format: "html") do |b|
+            b.define_static_routes do
+              get_other_rails_routes
+            end
+          end
+        end
+
+        it "appends .html when path has no extension" do
+          get "/about(.:format)", as: :about
+
+          expect(builder.static_routes.map(&:path)).to eql(["/about.html"])
+        end
+
+        it "preserves existing extension" do
+          get "/feed.xml(.:format)", as: :feed
+
+          expect(builder.static_routes.map(&:path)).to eql(["/feed.xml"])
+        end
       end
     end
 
@@ -146,6 +184,18 @@ RSpec.describe BakingRack::Rails::Builder do
         verb: "GET",
         parts: [],
         app: engine
+      )
+    end
+
+    # Simulates how Rails wraps engines in ActionDispatch::Routing::Mapper::Constraints
+    def mount_wrapped(engine, at:)
+      wrapper = OpenStruct.new(app: engine)
+      app.routes.routes << OpenStruct.new(
+        name: nil,
+        path: OpenStruct.new(spec: at),
+        verb: "GET",
+        parts: [],
+        app: wrapper
       )
     end
   end
@@ -165,6 +215,21 @@ RSpec.describe BakingRack::Rails::Builder do
       end
 
       expect(builder.static_routes.map(&:path)).to contain_exactly("/admin/dashboard", "/admin/settings")
+    end
+
+    it "handles engines wrapped in Constraints" do
+      engine = MockEngine.new
+      engine.get "/dashboard"
+
+      wrapped_route = OpenStruct.new(app: OpenStruct.new(app: engine))
+
+      builder = described_class.new(app:) do |b|
+        b.define_static_routes do
+          get_rails_engine_routes "/admin", wrapped_route
+        end
+      end
+
+      expect(builder.static_routes.map(&:path)).to eql(["/admin/dashboard"])
     end
 
     it "supports the except option to skip specific routes" do

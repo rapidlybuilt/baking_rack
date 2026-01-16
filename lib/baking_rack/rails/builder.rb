@@ -9,12 +9,16 @@ module BakingRack
 
       ERROR_CODES_WITH_PATHS = [404, 403, 500].freeze
 
+      attr_accessor :default_format
+
       def initialize(app: ::Rails.application,
                      build_directory: BakingRack.config.build_directory,
-                     domain_name: nil, &block)
-        super
+                     domain_name: nil,
+                     default_format: nil, &block)
+        super(app:, build_directory:, domain_name:, &block)
 
         self.public_directory = "public"
+        self.default_format = default_format
       end
 
       def domain_name
@@ -39,7 +43,7 @@ module BakingRack
       end
 
       def static_routes_context
-        StaticRoutesContext.new(app, index_filename, @static_routes)
+        StaticRoutesContext.new(app, index_filename, @static_routes, default_format:)
       end
 
       def default_domain_name
@@ -72,9 +76,10 @@ module BakingRack
           /cable
         ].freeze
 
-        def initialize(app, *args, **kargs)
+        def initialize(app, *args, default_format: nil, **kargs)
           super(*args, **kargs)
           @app = app
+          @default_format = default_format
 
           singleton_class.include(@app.routes.url_helpers)
         end
@@ -86,8 +91,8 @@ module BakingRack
             nested_prefix = prefix + render_route_spec(route.path.spec)
 
             # Recursively drill down into mounted engines
-            if mounted_engine?(route)
-              get_other_rails_routes(except:, route_set: route.app.routes, prefix: nested_prefix)
+            if (engine = extract_mounted_engine(route))
+              get_other_rails_routes(except:, route_set: engine.routes, prefix: nested_prefix)
             else
               get(nested_prefix, status: infer_route_status(route, nested_prefix)) unless already_added?(nested_prefix)
             end
@@ -95,36 +100,50 @@ module BakingRack
         end
 
         def get_rails_engine_routes(path, route, except: [])
-          get_other_rails_routes(except:, route_set: route.app.routes, prefix: path)
+          engine = extract_mounted_engine(route) || route.app
+          get_other_rails_routes(except:, route_set: engine.routes, prefix: path)
         end
 
       private
 
+        def extract_mounted_engine(route)
+          # Rails wraps mounted engines in ActionDispatch::Routing::Mapper::Constraints
+          # so we need to check both route.app and route.app.app for the engine
+          if route.app.respond_to?(:routes)
+            route.app
+          elsif route.app.respond_to?(:app) && route.app.app.respond_to?(:routes)
+            route.app.app
+          end
+        end
+
         def mounted_engine?(route)
-          route.app.respond_to?(:routes)
+          extract_mounted_engine(route) != nil
         end
 
         def ignored_route?(route, except: [])
           name = route.name.to_s
           path = route.path.spec.to_s
 
-          # explicitly skipped
-          return true if except.include?(name) || except.include?(path)
+          explicitly_ignored_route?(name, path, except:) || # explicitly skipped
+            rails_default_route?(name, path) ||             # Rails adds a bunch of routes
+            !simple_path_variables?(route) || # this method doesn't support path variables
+            !static_route?(route) # ignore non-static routes
+        end
 
-          # static sites only support GET requests
-          return true unless route.verb == "GET"
-
-          # Rails adds a bunch of routes
-          return true if rails_default_route?(name, path)
-
-          # this method doesn't support path variables
-          return true unless route.parts == [] || route.parts == [:format]
-
-          false
+        def explicitly_ignored_route?(name, path, except: [])
+          except.include?(name) || except.include?(path)
         end
 
         def rails_default_route?(name, path)
           IGNORED_ROUTE_NAMES.include?(name) || IGNORED_ROUTE_PATHS.include?(path)
+        end
+
+        def simple_path_variables?(route)
+          route.parts == [] || route.parts == [:format]
+        end
+
+        def static_route?(route)
+          route.verb == "GET" || mounted_engine?(route)
         end
 
         def already_added?(path)
@@ -138,8 +157,10 @@ module BakingRack
           if path.end_with?(format)
             path = path.sub(format, "")
 
-            ext = File.extname(path)
-            path += ".html" if ext == ""
+            if @default_format
+              ext = File.extname(path)
+              path += ".#{@default_format}" if ext == ""
+            end
           end
 
           path
@@ -151,7 +172,7 @@ module BakingRack
                                          route.app.app.is_a?(ActionDispatch::Routing::PathRedirect)
 
           ERROR_CODES_WITH_PATHS.detect do |code|
-            path == "/#{code}.html"
+            ["/#{code}.#{@default_format || "html"}", "/#{code}"].include?(path)
           end || 200
         end
       end
