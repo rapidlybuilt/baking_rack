@@ -27,7 +27,7 @@ module BakingRack
         command = "terraform #{name}"
         stdout, stderr = Open3.capture3(command)
 
-        if stdout == "" && stderr != ""
+        if stdout == "" && !stderr.to_s.empty?
           warn stderr
           raise Error, "command errored: #{command}"
         end

@@ -95,11 +95,15 @@ RSpec.describe BakingRack::CLI do
     end
 
     it "errors when the role-to-assume can't be determined" do
+      stub_terraform_command "output -raw baking_rack_iam_role_arn", ""
+
       subject.options = thor_options(bucket: "test")
       expect{output}.to raise_error("cannot infer role-to-assume, please provide its value")
     end
 
     it "errors when bucket is missing and terraform can't supply it" do
+      stub_terraform_command "output -raw baking_rack_bucket_name", ""
+
       subject.options = thor_options(role_to_assume: "test-role")
       expect{output}.to raise_error(ArgumentError, "bucket required")
     end
