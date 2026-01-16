@@ -5,6 +5,7 @@ source "https://rubygems.org"
 gemspec
 
 gem "aws-sdk-s3", require: false
+gem "ostruct" # required for Ruby 4.0+
 gem "rexml" # required by aws-sdk-s3
 
 gem "debug"
