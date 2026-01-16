@@ -79,13 +79,29 @@ module BakingRack
           singleton_class.include(@app.routes.url_helpers)
         end
 
-        def get_other_rails_routes(except: [])
-          @app.routes.routes.each do |route|
+        def get_other_rails_routes(except: [], route_set: @app.routes, prefix: "")
+          route_set.routes.each do |route|
             next if ignored_route?(route, except:)
 
-            path = render_route_spec(route.path.spec)
-            get(path, status: infer_route_status(route, path)) unless already_added?(path)
+            nested_prefix = prefix + render_route_spec(route.path.spec)
+
+            # Recursively drill down into mounted engines
+            if mounted_engine?(route)
+              get_other_rails_routes(except:, route_set: route.app.routes, prefix: nested_prefix)
+            else
+              get(nested_prefix, status: infer_route_status(route, nested_prefix)) unless already_added?(nested_prefix)
+            end
           end
+        end
+
+        def get_rails_engine_routes(path, route, except: [])
+          get_other_rails_routes(except:, route_set: route.app.routes, prefix: path)
+        end
+
+      private
+
+        def mounted_engine?(route)
+          route.app.respond_to?(:routes)
         end
 
         def ignored_route?(route, except: [])

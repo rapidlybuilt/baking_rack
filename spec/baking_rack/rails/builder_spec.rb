@@ -76,10 +76,91 @@ RSpec.describe BakingRack::Rails::Builder do
       end
     end
 
+    it "recursively drills down into mounted engines" do
+      engine = MockEngine.new
+      engine.get "/dashboard"
+      engine.get "/users"
+
+      mount engine, at: "/admin"
+
+      expect(builder.static_routes.map(&:path)).to contain_exactly("/admin/dashboard", "/admin/users")
+    end
+
+    it "handles deeply nested engines" do
+      inner_engine = MockEngine.new
+      inner_engine.get "/settings"
+
+      outer_engine = MockEngine.new
+      outer_engine.get "/overview"
+      outer_engine.mount inner_engine, at: "/config"
+
+      mount outer_engine, at: "/admin"
+
+      expect(builder.static_routes.map(&:path)).to contain_exactly(
+        "/admin/overview",
+        "/admin/config/settings"
+      )
+    end
+
+    it "combines app routes with engine routes" do
+      get "/", as: :root
+
+      engine = MockEngine.new
+      engine.get "/about"
+
+      mount engine, at: "/pages"
+
+      expect(builder.static_routes.map(&:path)).to contain_exactly("/", "/pages/about")
+    end
+
   private
 
     def get(path, as: nil, verb: "GET", parts: [:format])
-      app.routes.routes << OpenStruct.new(name: as, path: OpenStruct.new(spec: path), verb:, parts:)
+      app.routes.routes << OpenStruct.new(name: as, path: OpenStruct.new(spec: path), verb:, parts:, app: nil)
+    end
+
+    def mount(engine, at:)
+      app.routes.routes << OpenStruct.new(
+        name: nil,
+        path: OpenStruct.new(spec: at),
+        verb: "GET",
+        parts: [],
+        app: engine
+      )
+    end
+  end
+
+  describe "#get_rails_engine_routes" do
+    it "adds routes from an engine at the specified path" do
+      engine = MockEngine.new
+      engine.get "/dashboard"
+      engine.get "/settings"
+
+      engine_route = OpenStruct.new(app: engine)
+
+      builder = described_class.new(app:) do |b|
+        b.define_static_routes do
+          get_rails_engine_routes "/admin", engine_route
+        end
+      end
+
+      expect(builder.static_routes.map(&:path)).to contain_exactly("/admin/dashboard", "/admin/settings")
+    end
+
+    it "supports the except option to skip specific routes" do
+      engine = MockEngine.new
+      engine.get "/public", as: :public_page
+      engine.get "/private", as: :private_page
+
+      engine_route = OpenStruct.new(app: engine)
+
+      builder = described_class.new(app:) do |b|
+        b.define_static_routes do
+          get_rails_engine_routes "/section", engine_route, except: ["private_page"]
+        end
+      end
+
+      expect(builder.static_routes.map(&:path)).to eql(["/section/public"])
     end
   end
 
@@ -100,6 +181,26 @@ RSpec.describe BakingRack::Rails::Builder do
 
     def config
       @config ||= OpenStruct.new(hosts: ["example.com"])
+    end
+  end
+
+  class MockEngine
+    def routes
+      @routes ||= OpenStruct.new(routes: [])
+    end
+
+    def get(path, as: nil, verb: "GET", parts: [:format])
+      routes.routes << OpenStruct.new(name: as, path: OpenStruct.new(spec: path), verb:, parts:, app: nil)
+    end
+
+    def mount(engine, at:)
+      routes.routes << OpenStruct.new(
+        name: nil,
+        path: OpenStruct.new(spec: at),
+        verb: "GET",
+        parts: [],
+        app: engine
+      )
     end
   end
 end
