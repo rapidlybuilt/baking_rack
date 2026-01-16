@@ -139,7 +139,7 @@ module BakingRack
         end
 
         def simple_path_variables?(route)
-          route.parts == [] || route.parts == [:format]
+          [[], [:format]].include?(route.parts)
         end
 
         def static_route?(route)

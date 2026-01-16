@@ -68,7 +68,7 @@ module BakingRack
       end
 
       files.collect do |file|
-        file[build_directory.length + 1..]
+        file[(build_directory.length + 1)..]
       end
     end
 
