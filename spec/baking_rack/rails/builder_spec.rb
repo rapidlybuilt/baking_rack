@@ -113,6 +113,26 @@ RSpec.describe BakingRack::Rails::Builder do
       expect(builder.static_routes.map(&:path)).to contain_exactly("/", "/pages/about")
     end
 
+    describe "render_route_spec" do
+      it "strips (.:format) suffix and appends .html when path has no extension" do
+        get "/about(.:format)", as: :about
+
+        expect(builder.static_routes.map(&:path)).to eql(["/about.html"])
+      end
+
+      it "strips (.:format) suffix but preserves existing extension" do
+        get "/feed.xml(.:format)", as: :feed
+
+        expect(builder.static_routes.map(&:path)).to eql(["/feed.xml"])
+      end
+
+      it "leaves paths without (.:format) unchanged" do
+        get "/static", as: :static
+
+        expect(builder.static_routes.map(&:path)).to eql(["/static"])
+      end
+    end
+
   private
 
     def get(path, as: nil, verb: "GET", parts: [:format])
