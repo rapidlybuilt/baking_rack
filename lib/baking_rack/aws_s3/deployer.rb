@@ -33,7 +33,7 @@ module BakingRack
         headers_out = {
           acl:,
           body: file.content,
-          content_type: content_type_for(key) || "binary/octet-stream",
+          content_type: content_type_with_charset_for(key) || "binary/octet-stream",
           cache_control: cache_control_for(key),
         }
 

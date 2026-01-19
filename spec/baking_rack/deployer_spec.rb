@@ -52,6 +52,10 @@ RSpec.describe BakingRack::Deployer do
       expect(deployer.send(:content_type_for, "foo/bar.jpg")).to eql("image/jpeg")
     end
 
+    it "retrieves content types with charset" do
+      expect(deployer.send(:content_type_with_charset_for, "foo/bar.html")).to eql("text/html; charset=utf-8")
+    end
+
     it "tells whether a path contains a fingerprinted filename" do
       expect(deployer.send(:fingerprinted?, "foo/bar-00bfe90b789ca3d522ceb4d3dc728007.jpg")).to eql(true)
       expect(deployer.send(:fingerprinted?, "foo/bar.jpg")).to eql(false)

@@ -26,7 +26,7 @@ RSpec.describe BakingRack::AwsS3::Deployer do
     deployer.run
   end
 
-  it "writes modifies files to S3" do
+  it "writes modified files to S3" do
     write_file "favicon.png", "BINARY"
 
     expect(s3_bucket).to receive(:objects).and_return([
@@ -98,6 +98,39 @@ RSpec.describe BakingRack::AwsS3::Deployer do
     expect_no_s3_put
 
     deployer.run(dry_run: true)
+  end
+
+  describe "text charset" do
+    before { write_file "index.html", "<p>Hi!</p>" }
+    
+    it "includes charset for text content types by default" do
+      expect(s3_bucket).to receive(:objects).and_return([])
+      expect_s3_put(
+        path: "index.html",
+        acl: "public-read",
+        body: "<p>Hi!</p>",
+        cache_control: "public,max-age=10",
+        content_type: "text/html; charset=utf-8"
+      )
+
+      deployer.run
+    end
+
+    it "allows skipping charset for text content types" do
+      expect(s3_bucket).to receive(:objects).and_return([])
+      expect_s3_put(
+        path: "index.html",
+        acl: "public-read",
+        body: "<p>Hi!</p>",
+        cache_control: "public,max-age=10",
+        content_type: "text/html"
+      )
+
+      deployer.tap do |d|
+        d.text_charset = nil
+        d.run
+      end
+    end
   end
 
   describe "bucket_name argument" do

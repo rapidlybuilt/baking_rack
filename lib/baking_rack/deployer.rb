@@ -9,10 +9,13 @@ module BakingRack
     attr_reader :build_directory
     attr_reader :ignored_filenames
 
+    attr_accessor :text_charset
+
     def initialize(build_directory: BakingRack.config.build_directory,
                    ignored_filenames: BakingRack.config.ignored_filenames)
       @build_directory = build_directory
       @ignored_filenames = ignored_filenames
+      @text_charset = "utf-8"
     end
 
     def run(dry_run: false, force_all: false)
@@ -57,6 +60,22 @@ module BakingRack
       extension = extension[1..] if extension.start_with?(".")
 
       MIME::Types.type_for(extension).first&.content_type
+    end
+
+    def content_type_with_charset_for(path)
+      content_type = content_type_for(path)
+
+      if content_type && text_charset && text_content_type?(content_type)
+        content_type = "#{content_type}; charset=#{text_charset}"
+      end
+
+      content_type
+    end
+
+    def text_content_type?(content_type)
+      content_type.start_with?("text/") ||
+        content_type.end_with?("+xml") ||
+        %w[application/javascript application/json].include?(content_type)
     end
 
     def source_files
