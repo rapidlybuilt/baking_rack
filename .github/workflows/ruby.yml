@@ -25,9 +25,7 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
-
-      - name: Install dependencies
-        run: bundle install
+          bundler-cache: true
 
       - name: Run RuboCop
         run: bundle exec rubocop
@@ -50,9 +48,7 @@ jobs:
     - uses: ruby/setup-ruby@v1
       with:
         ruby-version: ${{ matrix.ruby }}
-
-    - name: Install dependencies
-      run: bundle install
+        bundler-cache: true
 
     - name: Run tests
       run: bundle exec rspec
