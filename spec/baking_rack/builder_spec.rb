@@ -93,6 +93,32 @@ RSpec.describe BakingRack::Builder do
       expect(read_build_file("about/index.html")).to eql(html_content)
     end
 
+    it "converts paths with unknown extensions to directory-style index files" do
+      builder = described_class.new(app: basic_app, domain_name:) do |b|
+        b.define_static_routes do
+          get "/about.com"
+        end
+      end
+      
+      builder.run
+
+      expect(read_build_file("about.com/index.html")).to eql(html_content)
+    end
+
+    it "allows configuring known extensions" do
+      builder = described_class.new(app: basic_app, domain_name:) do |b|
+        b.known_extensions << "svg"
+        b.define_static_routes do
+          get "/about.svg"
+        end
+      end
+
+      builder.run
+
+      # With .com as a known extension, it should be preserved as a file
+      expect(read_build_file("about.svg")).to eql(html_content)
+    end
+
     it "preserves paths with file extensions as files" do
       builder = described_class.new(app: basic_app, domain_name:) do |b|
         b.define_static_routes do

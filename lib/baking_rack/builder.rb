@@ -12,6 +12,7 @@ module BakingRack
     attr_accessor :domain_name
     attr_accessor :public_directory
     attr_accessor :default_content_type
+    attr_accessor :known_extensions
 
     attr_writer :uri
 
@@ -20,6 +21,7 @@ module BakingRack
       @build_directory = File.expand_path(build_directory)
       @domain_name = domain_name
       @default_content_type = "text/html"
+      @known_extensions = %w[html json]
 
       @static_routes = []
       @static_route_blocks = []
@@ -197,11 +199,20 @@ module BakingRack
     def filepath_from_content_type(path, content_type)
       extension = extension_from_content_type(content_type)
 
-      if path.end_with?("/") || File.extname(path).empty?
+      if path.end_with?("/") || !known_extension?(path)
         File.join(path, "index.#{extension}")
       else
         path
       end
+    end
+
+    def known_extension?(path)
+      ext = File.extname(path)
+      return false if ext.empty?
+
+      # Remove leading dot from extension (e.g., ".html" -> "html")
+      ext_without_dot = ext[1..]
+      known_extensions.include?(ext_without_dot)
     end
 
     def extension_from_content_type(content_type)
