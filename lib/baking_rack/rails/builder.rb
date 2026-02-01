@@ -43,7 +43,7 @@ module BakingRack
       end
 
       def static_routes_context
-        StaticRoutesContext.new(app, index_filename, @static_routes, default_format:)
+        StaticRoutesContext.new(app, @static_routes, default_format:)
       end
 
       def default_domain_name
