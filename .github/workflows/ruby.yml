@@ -8,13 +8,8 @@
 name: Tests
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
-
-permissions:
-  contents: read
+  push:
 
 jobs:
   lint:
@@ -54,6 +49,7 @@ jobs:
       run: bundle exec rspec
   release:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     needs:
       - lint
       - test
