@@ -148,18 +148,32 @@ module BakingRack
 
     def request_static_route(static_route)
       uri = self.uri.merge(static_route.path)
-      status = static_route.status
-
       request = self.class.generate_request(uri, content_type: static_route.content_type)
       response = app.call(request)
 
       notify_observers(:static_route_requested, static_route:, request:, response:)
+      handle_response(request, response, static_route, uri)
+    end
 
-      unless response[0].to_i == status.to_i
-        raise UnexpectedStatusCode, "got #{response[0]}, expected #{status} for #{uri}"
+    def handle_response(request, response, static_route, uri)
+      actual_status = response[0].to_i
+      expected_status = static_route.status.to_i
+
+      # Bubble up the exception from the Rails app
+      exception = extract_exception(request)
+      raise exception if exception
+
+      unless actual_status == expected_status
+        raise UnexpectedStatusCode, "got #{actual_status}, expected #{expected_status} for #{uri}"
       end
 
       self.class.deconstruct_response(response)
+    end
+
+    def extract_exception(env)
+      env["action_dispatch.exception"] || # Rails
+        env["sinatra.error"] ||           # Sinatra
+        env["rack.exception"]             # Some generic middleware
     end
 
     def write_file(path, content)
