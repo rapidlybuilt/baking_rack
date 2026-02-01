@@ -100,7 +100,7 @@ Intelligent defaults:
 * `app` defaults to `Rails.application`
 * `domain_name` defaults to `Rails.application.config.hosts.first`
 
-### AWS + Terraform
+### AWS + Terraform + GitHub
 
 1. Define the terraform module and some outputs
 
@@ -150,7 +150,7 @@ terraform apply
 
 4. Generate a GitHub workflow
 
-Use GitHub Actions to automatically publish the latest `main` to the S3 bucket.
+Use GitHub Actions to automatically publish the latest `main` to the S3 bucket. The IAM role and bucket name are outputs from the `terraform apply` command.
 
 ```yaml
 name: Publish to production
