@@ -82,14 +82,14 @@ RSpec.describe BakingRack::CLI do
     after { FileUtils.rm_rf(".github/workflows/publish.yml") }
 
     it "writes the file" do
-      subject.options = thor_options(role_to_assume: "test-role", bucket: "test")
+      subject.options = thor_options(role_to_assume: "test-role", bucket: "test", branch: "main")
       expect(output).to include("create  .github/workflows/publish.yml")
       expect(content).to include(%(role-to-assume: "test-role"))
     end
 
     it "infers the bucket using terraform" do
       stub_terraform_command "output -raw baking_rack_bucket_name", "my-bucket"
-      subject.options = thor_options(role_to_assume: "test-role")
+      subject.options = thor_options(role_to_assume: "test-role", branch: "main")
       expect(output).to include("create  .github/workflows/publish.yml")
       expect(content).to include("BUCKET_NAME: my-bucket")
     end
