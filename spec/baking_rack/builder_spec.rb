@@ -46,6 +46,29 @@ RSpec.describe BakingRack::Builder do
       expect{builder.run}.to raise_error(BakingRack::UnexpectedStatusCode)
     end
 
+    %w[
+      action_dispatch.exception
+      sinatra.error
+      rack.exception
+    ].each do |exception_key|
+      it "re-raises exceptions stored in the env by #{exception_key}" do
+        original_error = RuntimeError.new("Something went wrong in the controller")
+
+        app = Proc.new do |env|
+          env[exception_key] = original_error
+          ["500", {"Content-Type" => "text/html"}, ["Internal Server Error"]]
+        end
+
+        builder = described_class.new(app:, domain_name:) do |b|
+          b.define_static_routes do
+            get "/foo.html"
+          end
+        end
+
+        expect { builder.run }.to raise_error(original_error)
+      end
+    end
+
     it "appends index.html to naked directories when writing to the file" do
       builder = described_class.new(app: basic_app, domain_name:) do |b|
         b.define_static_routes do
@@ -68,6 +91,32 @@ RSpec.describe BakingRack::Builder do
       builder.run
 
       expect(read_build_file("about/index.html")).to eql(html_content)
+    end
+
+    it "converts paths with unknown extensions to directory-style index files" do
+      builder = described_class.new(app: basic_app, domain_name:) do |b|
+        b.define_static_routes do
+          get "/about.com"
+        end
+      end
+      
+      builder.run
+
+      expect(read_build_file("about.com/index.html")).to eql(html_content)
+    end
+
+    it "allows configuring known extensions" do
+      builder = described_class.new(app: basic_app, domain_name:) do |b|
+        b.known_extensions << "svg"
+        b.define_static_routes do
+          get "/about.svg"
+        end
+      end
+
+      builder.run
+
+      # With .com as a known extension, it should be preserved as a file
+      expect(read_build_file("about.svg")).to eql(html_content)
     end
 
     it "preserves paths with file extensions as files" do

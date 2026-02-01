@@ -11,7 +11,8 @@ module BakingRack
     attr_accessor :build_directory
     attr_accessor :domain_name
     attr_accessor :public_directory
-    attr_accessor :index_filename
+    attr_accessor :default_content_type
+    attr_accessor :known_extensions
 
     attr_writer :uri
 
@@ -19,7 +20,8 @@ module BakingRack
       @app = app
       @build_directory = File.expand_path(build_directory)
       @domain_name = domain_name
-      @index_filename = "index.html"
+      @default_content_type = "text/html"
+      @known_extensions = %w[html json]
 
       @static_routes = []
       @static_route_blocks = []
@@ -29,8 +31,7 @@ module BakingRack
     end
 
     def define_static_routes(&block)
-      # HACK: delay the running of the block so the web framework
-      # loads the route helpers.
+      # lazy load the static routes to ensure everything's loaded
       @static_routes_ready = false
 
       @static_route_blocks << block
@@ -110,7 +111,7 @@ module BakingRack
     end
 
     def static_routes_context
-      StaticRoutesContext.new(index_filename, @static_routes)
+      StaticRoutesContext.new(@static_routes)
     end
 
     def init_static_routes
@@ -137,27 +138,44 @@ module BakingRack
     def build_static_route(static_route)
       status, headers, body = request_static_route(static_route)
 
+      # Determine filepath from response content-type if not already set
+      filepath = static_route.filepath || filepath_from_content_type(static_route.path, headers["content-type"])
+
       if [301, 302].include?(status.to_i)
-        write_redirect(static_route.filepath, headers["location"])
+        write_redirect(filepath, headers["location"])
       else
-        write_file(static_route.filepath, body)
+        write_file(filepath, body)
       end
     end
 
     def request_static_route(static_route)
       uri = self.uri.merge(static_route.path)
-      status = static_route.status
-
-      request = self.class.generate_request(uri)
+      request = self.class.generate_request(uri, content_type: static_route.content_type)
       response = app.call(request)
 
       notify_observers(:static_route_requested, static_route:, request:, response:)
+      handle_response(request, response, static_route, uri)
+    end
 
-      unless response[0].to_i == status.to_i
-        raise UnexpectedStatusCode, "got #{response[0]}, expected #{status} for #{uri}"
+    def handle_response(request, response, static_route, uri)
+      actual_status = response[0].to_i
+      expected_status = static_route.status.to_i
+
+      # Bubble up the exception from the Rails app
+      exception = extract_exception(request)
+      raise exception if exception
+
+      unless actual_status == expected_status
+        raise UnexpectedStatusCode, "got #{actual_status}, expected #{expected_status} for #{uri}"
       end
 
       self.class.deconstruct_response(response)
+    end
+
+    def extract_exception(env)
+      env["action_dispatch.exception"] || # Rails
+        env["sinatra.error"] ||           # Sinatra
+        env["rack.exception"]             # Some generic middleware
     end
 
     def write_file(path, content)
@@ -178,38 +196,62 @@ module BakingRack
       BakingRack.redirect_file_content(location)
     end
 
+    def filepath_from_content_type(path, content_type)
+      extension = extension_from_content_type(content_type)
+
+      if path.end_with?("/") || !known_extension?(path)
+        File.join(path, "index.#{extension}")
+      else
+        path
+      end
+    end
+
+    def known_extension?(path)
+      ext = File.extname(path)
+      return false if ext.empty?
+
+      # Remove leading dot from extension (e.g., ".html" -> "html")
+      ext_without_dot = ext[1..]
+      known_extensions.include?(ext_without_dot)
+    end
+
+    def extension_from_content_type(content_type)
+      content_type ||= default_content_type
+
+      # Strip charset and other parameters (e.g., "text/html; charset=utf-8" -> "text/html")
+      mime_type = content_type.split(";").first&.strip
+
+      types = MIME::Types[mime_type]
+      types.first&.preferred_extension || default_extension
+    end
+
+    def default_extension
+      @default_extension ||= MIME::Types[default_content_type].first&.preferred_extension || "html"
+    end
+
     class StaticRoute # :nodoc:
       attr_accessor :path
       attr_accessor :status
       attr_accessor :headers
       attr_accessor :filepath
+      attr_accessor :content_type
 
-      def initialize(path, status:, headers:, filepath: nil)
+      def initialize(path, status:, headers:, filepath: nil, content_type: nil)
         @path = path
         @status = status
         @headers = headers
         @filepath = filepath
+        @content_type = content_type
       end
     end
 
     class StaticRoutesContext # :nodoc:
-      def initialize(index_filename, routes)
-        @index_filename = index_filename
+      def initialize(routes)
         @routes = routes
       end
 
-      def get(path, status: 200, headers: {}, filepath: default_filepath(path))
-        @routes << StaticRoute.new(path, status:, headers:, filepath:)
-      end
-
-    private
-
-      def default_filepath(path)
-        if path.end_with?("/") || File.extname(path).empty?
-          File.join(path, @index_filename)
-        else
-          path
-        end
+      def get(path, status: 200, headers: {}, filepath: nil, content_type: nil)
+        @routes << StaticRoute.new(path, status:, headers:, filepath:, content_type:)
       end
     end
 
@@ -218,8 +260,8 @@ module BakingRack
         new(...).run
       end
 
-      def generate_request(uri)
-        {
+      def generate_request(uri, content_type: nil)
+        request = {
           # https://github.com/rack/rack/blob/d3225f7c201320ed272a2fa7b000c5850e4a5f88/lib/rack/mock.rb#L43-L50
           Rack::RACK_VERSION => Rack.release,
           Rack::RACK_INPUT => StringIO.new,
@@ -240,6 +282,10 @@ module BakingRack
           Rack::SERVER_NAME => uri.host,
           Rack::SERVER_PORT => uri.port,
         }
+
+        request["HTTP_ACCEPT"] = content_type if content_type
+
+        request
       end
 
       def deconstruct_response(response)

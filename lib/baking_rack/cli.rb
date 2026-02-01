@@ -3,7 +3,6 @@
 require "baking_rack"
 require "thor"
 
-require_relative "commands/aws_github_publisher"
 require_relative "commands/logger"
 
 module BakingRack

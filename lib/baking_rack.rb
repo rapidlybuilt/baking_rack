@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require "mime-types"
 require "zeitwerk"
 
 lib_directory = File.expand_path(__dir__)
@@ -21,8 +22,8 @@ module BakingRack
   class << self
     def config
       @config ||= Config.new(
-        build_directory: "_site",          # Jekyll's default
-        ignored_filenames: %w[.DS_Store],  # macOS pollution
+        build_directory: "tmp/_site",     # tmp + Jekyll's default
+        ignored_filenames: %w[.DS_Store], # macOS pollution
       )
       yield @config if block_given?
       @config

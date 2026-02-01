@@ -6,8 +6,6 @@ require "digest"
 module BakingRack
   module AwsS3
     class Deployer < BakingRack::Deployer
-      include UsesTerraform
-
       attr_reader :acl
 
       def initialize(client: nil, bucket_name: nil, acl: "public-read", **kargs)
@@ -19,11 +17,9 @@ module BakingRack
       end
 
       # ENV["BUCKET_NAME"] when deploying from a CI/CD process.
-      # terraform output value when manually.
       def bucket_name
         # load the default bucket name only if it's actually needed
         @bucket_name ||= ENV["BUCKET_NAME"] ||
-                         read_bucket_name_from_terraform ||
                          raise(ArgumentError, "bucket_name required")
       end
 
@@ -77,10 +73,6 @@ module BakingRack
 
       def s3_upload_file(_file, key, properties)
         s3_bucket.object(key).put(properties) unless dry_run?
-      end
-
-      def read_bucket_name_from_terraform
-        read_terraform_output_value("baking_rack_bucket_name")
       end
     end
   end
