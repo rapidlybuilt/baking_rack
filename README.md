@@ -114,14 +114,8 @@ module "baking_rack" {
   branch_name       = var.github_branch_name
 }
 
-# These outputs are used by the `github_publisher` generator.
-
-output "baking_rack_iam_role_arn" {
-  value = module.baking_rack.iam_role_arn
-}
-
-output "baking_rack_bucket_name" {
-  value = module.baking_rack.bucket_name
+output "baking_rack" {
+  value = module.baking_rack
 }
 ```
 
@@ -158,8 +152,49 @@ terraform apply
 
 Use GitHub Actions to automatically publish the latest `main` to the S3 bucket.
 
-```
-bundle exec baking_rack github_publisher
+```yaml
+name: Publish to production
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  AWS_REGION : "us-east-1"
+
+jobs:
+  Publish:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Git clone the repository
+        uses: actions/checkout@v3
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      # https://aws.amazon.com/blogs/security/use-iam-roles-to-connect-github-actions-to-actions-in-aws/
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v1.7.0
+        with:
+          role-to-assume: "(FROM TERRAFORM OUTPUT)"
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Publish Site
+        env:
+          RAILS_ENV: production
+          RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
+          BUCKET_NAME: "(FROM TERRAFORM OUTPUT)"
+        run: |
+          bin/rails assets:precompile
+          bundle exec baking_rack publish
 ```
 
 ## Contributing
