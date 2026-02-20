@@ -39,6 +39,20 @@ module BakingRack
         super
       end
 
+      def supports_prune?
+        true
+      end
+
+      def remote_paths
+        s3_bucket.objects.collect(&:key)
+      end
+
+      def delete_remote_path(path, dry_run: false)
+        return if dry_run
+
+        s3_bucket.object(path).delete
+      end
+
     private
 
       def unchanged?(file)

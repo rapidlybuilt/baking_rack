@@ -4,8 +4,10 @@ require "baking_rack"
 require "thor"
 
 require_relative "commands/logger"
+require_relative "commands/prune"
 
 module BakingRack
+  # rubocop:disable Metrics/ClassLength
   class CLI < Thor
     include Thor::Actions
 
@@ -36,6 +38,13 @@ module BakingRack
     method_options verbose: :boolean
     def clean
       run_clean
+    end
+
+    desc "prune", "Removes from the remote any files that are not in the current build directory"
+    method_options dry_run: :boolean
+    method_options verbose: :boolean
+    def prune
+      run_prune
     end
 
     desc "github_publisher", "Generate a GitHub Action to publish automatically on commit to a branch."
@@ -109,6 +118,15 @@ module BakingRack
       ensure_builder.clean
     end
 
+    def run_prune
+      ensure_deployer
+      Commands::Prune.new(
+        deployer: deployer,
+        shell: self,
+        dry_run: options.dry_run?,
+      ).run
+    end
+
     def init_install_template_root(name)
       path = File.expand_path(File.join(File.dirname(__FILE__), "../generators", name))
       self.class.source_root(path)
@@ -121,4 +139,5 @@ module BakingRack
       end
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end

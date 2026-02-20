@@ -45,6 +45,25 @@ module BakingRack
       @dry_run
     end
 
+    # Paths under build_directory (relative). Used by prune to compare with remote.
+    def local_paths
+      source_files
+    end
+
+    # Override in subclasses that support listing remote objects (e.g. S3).
+    def remote_paths
+      []
+    end
+
+    def supports_prune?
+      false
+    end
+
+    # Override in subclasses to delete a path from the remote. No-op by default.
+    def delete_remote_path(_path, dry_run: false)
+      # no-op; subclasses implement
+    end
+
   private
 
     def skip_file(file)
