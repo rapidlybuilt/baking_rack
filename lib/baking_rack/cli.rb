@@ -7,8 +7,7 @@ require_relative "commands/logger"
 require_relative "commands/prune"
 
 module BakingRack
-  # rubocop:disable Metrics/ClassLength
-  class CLI < Thor
+  class CLI < Thor # rubocop:disable Metrics/ClassLength
     include Thor::Actions
 
     desc "build", "Renders all static webpages and their assets to a build directory"
@@ -139,5 +138,4 @@ module BakingRack
       end
     end
   end
-  # rubocop:enable Metrics/ClassLength
 end

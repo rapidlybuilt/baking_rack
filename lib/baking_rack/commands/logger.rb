@@ -52,14 +52,12 @@ module BakingRack
         debug { colorize :yellow, "Building #{static_routes.length} static routes" }
       end
 
-      # rubocop:disable Lint/UnusedMethodArgument
-      def static_route_requested(static_route:, request:, response:)
+      def static_route_requested(static_route:, request:, response:) # rubocop:disable Lint/UnusedMethodArgument
         status = response[0]
         color = static_route.status.to_s == status.to_s ? :green : :red
 
         info { "#{colorize color, status.to_s} #{static_route.path}" }
       end
-      # rubocop:enable Lint/UnusedMethodArgument
 
       def build_static_routes_finished(static_routes)
         info { colorize :yellow, "Built #{static_routes.length} static routes" }
@@ -97,12 +95,10 @@ module BakingRack
         end
       end
 
-      # rubocop:disable Lint/UnusedMethodArgument
-      def system_exec_finished(_command, stdout:, stderr:, status:, env: {})
+      def system_exec_finished(_command, stdout:, stderr:, status:, env: {}) # rubocop:disable Lint/UnusedMethodArgument
         debug { stdout }
         debug { stderr }
       end
-      # rubocop:enable Lint/UnusedMethodArgument
 
     private
 

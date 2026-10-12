@@ -3,8 +3,7 @@
 require "rack"
 
 module BakingRack
-  # rubocop:disable Metrics/ClassLength
-  class Builder
+  class Builder # rubocop:disable Metrics/ClassLength
     include Observable
 
     attr_accessor :app
@@ -300,5 +299,4 @@ module BakingRack
       end
     end
   end
-  # rubocop:enable Metrics/ClassLength
 end
