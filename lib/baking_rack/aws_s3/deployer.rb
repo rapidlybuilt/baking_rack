@@ -8,12 +8,14 @@ module BakingRack
     class Deployer < BakingRack::Deployer
       attr_reader :acl
 
-      def initialize(client: nil, bucket_name: nil, acl: "public-read", **kargs)
+      def initialize(client: nil, bucket_name: nil, acl: "public-read", prefix: nil, **kargs)
         super(**kargs)
 
         @client = client
         @bucket_name = bucket_name
         @acl = acl
+        # nil falls through to ENV["S3_PREFIX"], same as bucket_name and BUCKET_NAME.
+        @prefix = Prefix.new(prefix.nil? ? ENV.fetch("S3_PREFIX", nil) : prefix)
       end
 
       # ENV["BUCKET_NAME"] when deploying from a CI/CD process.
@@ -23,14 +25,22 @@ module BakingRack
                          raise(ArgumentError, "bucket_name required")
       end
 
+      # Subdirectory inside the bucket, with a trailing slash. Nil deploys to the bucket root.
+      # ENV["S3_PREFIX"] when deploying from a CI/CD process.
+      def prefix
+        return nil unless @prefix.scoped?
+
+        @prefix.to_s
+      end
+
       def upload_file(file)
-        key = file.path
+        key = @prefix.object_key(file.path)
 
         headers_out = {
           acl:,
           body: file.content,
-          content_type: content_type_with_charset_for(key) || "binary/octet-stream",
-          cache_control: cache_control_for(key),
+          content_type: content_type_with_charset_for(file.path) || "binary/octet-stream",
+          cache_control: cache_control_for(file.path),
         }
 
         headers_out[:website_redirect_location] = file.redirect_location if file.redirect?
@@ -43,14 +53,16 @@ module BakingRack
         true
       end
 
+      # Paths relative to the prefix (or the bucket root when no prefix is set).
       def remote_paths
-        s3_bucket.objects.collect(&:key)
+        s3_objects.keys
       end
 
       def delete_remote_path(path, dry_run: false)
+        key = @prefix.object_key(path)
         return if dry_run
 
-        s3_bucket.object(path).delete
+        s3_object(key).delete
       end
 
     private
@@ -75,18 +87,29 @@ module BakingRack
         @s3_bucket ||= s3.bucket(bucket_name)
       end
 
-      def s3_etag(key)
-        s3_objects[key]&.etag
+      def s3_etag(relative_path)
+        s3_objects[relative_path]&.etag
       end
 
       def s3_objects
-        @s3_objects ||= s3_bucket.objects.to_a.each_with_object({}) do |obj, hash|
-          hash[obj.key] = obj
+        @s3_objects ||= {}.tap do |hash|
+          list_s3_objects.each do |obj|
+            relative = @prefix.relative_path(obj.key)
+            hash[relative] = obj if relative
+          end
         end
       end
 
+      def list_s3_objects
+        @prefix.list(s3_bucket)
+      end
+
+      def s3_object(key)
+        @prefix.object(s3_bucket, key)
+      end
+
       def s3_upload_file(_file, key, properties)
-        s3_bucket.object(key).put(properties) unless dry_run?
+        s3_object(key).put(properties) unless dry_run?
       end
     end
   end

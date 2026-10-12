@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-10-12
+
+### Added
+
+- **S3 subdirectory** — `BakingRack::AwsS3::Deployer` accepts `prefix:` (or `S3_PREFIX`) and uploads into that subdirectory. Prune deletes only objects inside it. When a prefix is set, list, read, write, and delete operations are limited to that prefix.
+
 ## [0.2.1] - 2026-02-20
 
 ### Added

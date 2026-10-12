@@ -63,6 +63,12 @@ BakingRack.config do |c|
 end
 ```
 
+Pass `prefix:` to publish into a subdirectory of the bucket. Uploads land in that subdirectory, and `baking_rack prune` removes objects there that are absent from the current build. The value is a directory boundary: `preview/pr-1` is stored as `preview/pr-1/`. Every list, read, write, and delete stays inside that prefix, and a key outside it raises `BakingRack::AwsS3::Prefix::OutsidePrefixError`. When `prefix:` is omitted, `S3_PREFIX` is used, the same way `BUCKET_NAME` supplies the bucket.
+
+```ruby
+c.deployer = BakingRack::AwsS3::Deployer.new(prefix: "preview/pr-1")
+```
+
 ```bash
 # view available commands
 $ bundle exec baking_rack help
